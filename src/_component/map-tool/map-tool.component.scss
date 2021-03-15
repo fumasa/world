@@ -1,0 +1,33 @@
+.centerbox {
+  display: -webkit-box;
+  -webkit-box-orient: horizontal;
+  -webkit-box-pack: center;
+  -webkit-box-align: center;
+
+  display: -moz-box;
+  -moz-box-orient: horizontal;
+  -moz-box-pack: center;
+  -moz-box-align: center;
+
+  width: 90%;
+  height: 90%;
+  padding: 0;
+  margin: 20px 20px 20px 20px;
+}
+
+canvas, svg {
+  overflow: hidden;
+  border: 1px solid black;
+  // border-radius: 20px;
+  position: absolute;
+  top: 20px;
+  left: 20px;
+}
+
+svg {
+  display: none;
+}
+
+polygon { 
+  fill: black;
+}
