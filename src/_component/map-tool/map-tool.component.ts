@@ -9,6 +9,7 @@ import * as topojson from 'topojson';
 import { WorldInfo } from 'src/_model/world.info';
 import { Helper } from 'src/_utils/helper';
 import { WorldBiome } from 'src/_enum/world.biome';
+import { Color } from 'src/_model/color';
 
 interface Datum {
   id: string;
@@ -60,21 +61,21 @@ export class MapToolComponent implements AfterViewInit {
 
   ngAfterViewInit(): void {
 
-    this.change();
+    //this.change();
 
     // this.drawMercator();
 
     // this.drawMercatorAlt().then(d => {
     //   console.log('done', d);
     // });
-    // this.drawGlobe();
+    //this.drawGlobe();
 
-    // this.drawSvgMercator();
+    this.drawSvgMercator();
 
     console.log('done');
   }
 
-  public toggle = false;
+  public toggle = true;
   public change() {
     if (this.toggle) {
       this.drawMercator();
@@ -87,24 +88,42 @@ export class MapToolComponent implements AfterViewInit {
   }
 
   private drawSvgMercator() {
-    const svg = d3.select(this.svg.nativeElement);
-    // const x = (long: number) => (long + 180)/(360 / width);
-    // const y = (lat: number) => (lat + 90)/(180 / height);
+
+    this.context = (<HTMLCanvasElement>this.canvas.nativeElement).getContext('2d');
+    const projection = d3.geoOrthographic();
 
     const width = document.body.clientWidth - 40;
     const height = document.body.clientHeight - 40;
 
-    svg.attr('width', width).attr('height', height);
+    this.canvas.nativeElement.width = width;
+    this.canvas.nativeElement.height = height;
 
-    const points: WorldInfo[][] = this.world.GetShorlines();
-    console.log(`points len ${points.length}`);
+    const image = this.context.createImageData(width, height);
 
-    svg.selectAll("polygon").data(points).enter().append("polygon").attr("points", (d) => {
-      return d.map(function (d) {
-        const point = Conversor.ToMercator(d.coordinate, width, height);
-        return [point.X, point.Y].join(",");
-      }).join(" ");
+    this.renderMercator(image).then((world) => {
+      this.context.clearRect(0, 0, width, height);
+      this.context.putImageData(image, 0, 0);
+  
+      this.getSvg(world);
     });
+
+    
+
+    // const svg = d3.select(this.svg.nativeElement);
+    // const x = (long: number) => (long + 180)/(360 / width);
+    // const y = (lat: number) => (lat + 90)/(180 / height);
+
+    // svg.attr('width', width).attr('height', height);
+
+    // const points: WorldInfo[][] = this.world.GetShorlines();
+    // console.log(`points len ${points.length}`);
+
+    // svg.selectAll("polygon").data(points).enter().append("polygon").attr("points", (d) => {
+    //   return d.map(function (d) {
+    //     const point = Conversor.ToMercator(d.coordinate, width, height);
+    //     return [point.X, point.Y].join(",");
+    //   }).join(" ");
+    // });
 
   }
 
@@ -235,9 +254,7 @@ export class MapToolComponent implements AfterViewInit {
     const lines = [];
     let c = 0;
 
-    for (var x = 0; x < width; x++) {
-      for (var y = 0; y < height; y++) {
-        let info = this.world.GetInformation(Conversor.FromMercator(new Point(x, y, 0), width, height), this.zoom);
+    const world = this.world.GetAllMercatorPoints(width, height, (info) => {
         let color = BiomeColor.Get(info.Biome);
 
         // if (this.zoom > 2) {
@@ -268,7 +285,7 @@ export class MapToolComponent implements AfterViewInit {
         //   color = [255, 255, 255, 255];
         // }
 
-        let cell = (x + y * image.width) * 4;
+        let cell = (info.point.X + info.point.Y * image.width) * 4;
 
         data[cell] = color[0];
         data[cell + 1] = color[1];
@@ -276,11 +293,11 @@ export class MapToolComponent implements AfterViewInit {
         data[cell + 3] = color[3];
 
         all++;
-      }
-    }
+      
+    });
     console.log(`info all:${all} tree:${tree} ore:${ore} ${width}x${height} ${c}`);
 
-    return image;
+    return world;
   }
 
   private renderGlobe(image: ImageData, mercatorData: Uint8ClampedArray, projection = d3.geoOrthographic()) {
@@ -291,7 +308,10 @@ export class MapToolComponent implements AfterViewInit {
     for (var y = 0, i = -1; y < height; ++y) {
       for (var x = 0; x < width; ++x) {
         var p = projection.invert([x, y]), λ = p[0], φ = p[1];
-        if (λ > 180 || λ < -180 || φ > 90 || φ < -90) { i += 4; continue; }
+        if (λ > 180 || λ < -180 || φ > 90 || φ < -90) { 
+          i += 4;
+          continue; 
+        }
         var q = ((90 - φ) / 180 * height | 0) * width + ((180 + λ) / 360 * width | 0) << 2;
         data[++i] = mercatorData[q];
         data[++i] = mercatorData[++q];
@@ -301,6 +321,10 @@ export class MapToolComponent implements AfterViewInit {
     }
 
     return image;
+  }
+
+  private getSvg(world: WorldInfo[]) {
+    
   }
 
   // private getShorelines(width: number, height: number): WorldInfo[][] {

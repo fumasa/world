@@ -73,6 +73,25 @@ export class WorldGenerator {
     return new WorldInfo(topology, trees, ores, coordinate, point);
   }
 
+  public GetAllMercatorPoints(width: number, height: number, inspector: (a: WorldInfo)=> void = null): Promise<WorldInfo[]> {
+    return new Promise<WorldInfo[]>((resolve) => {
+      const ini = new Date();
+      let count = 0;
+      const ret: WorldInfo[] = [];
+      for (var x = 0; x < width; x++) {
+        for (var y = 0; y < height; y++) {
+          const info = this.GetInformation(Conversor.FromMercator(new Point(x, y, 0), width, height), 1);
+          ret.push(info);
+          if (inspector !== null) inspector(info);
+          count++;
+        }
+      }
+      const end = new Date();
+      console.log(`duration ${Helper.TruncDecimals(end.getTime() / 1000 - ini.getTime() / 1000, 3)}s with count: ${count}`);
+      resolve(ret);
+    });
+  }
+
   public GetAllPoints(step = 0.0001): Promise<WorldInfo[]> {
     return new Promise<WorldInfo[]>((resolve) => {
       const ini = new Date();
