@@ -301,7 +301,7 @@ export class MapToolComponent implements AfterViewInit {
   // }
 
   private renderSvgMercator(width: number, height: number, onlyShoreline = false) {
-    return new Promise<{ world: any, image: any }>((resolve) => {
+    return new Promise<{ world: WorldInfo[], image: Uint8ClampedArray }>((resolve) => {
       let all = 0;
       let tree = 0;
       let ore = 0;
