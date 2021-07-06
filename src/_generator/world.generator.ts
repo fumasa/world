@@ -78,11 +78,13 @@ export class WorldGenerator {
       const ini = new Date();
       let count = 0;
       const ret: WorldInfo[] = [];
-      for (var x = 0; x < width; x++) {
-        for (var y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        for (let y = 0; y < height; y++) {
           const info = this.GetInformation(Conversor.FromMercator(new Point(x, y, 0), width, height), 1);
+          if (inspector !== null) {
+            inspector(info);
+          }
           ret.push(info);
-          if (inspector !== null) inspector(info);
           count++;
         }
       }
