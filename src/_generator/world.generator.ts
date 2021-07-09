@@ -5,6 +5,7 @@ import { Coordinate } from 'src/_model/coordinate';
 import { Conversor } from 'src/_utils/conversor';
 import { WorldBiome } from 'src/_enum/world.biome';
 import { Helper } from 'src/_utils/helper';
+import { Vector } from 'src/_model/vector';
 
 export class WorldGenerator {
   private noise = { raw: [], topology: [], trees: [], ores: [] };
@@ -77,10 +78,12 @@ export class WorldGenerator {
     return new Promise<WorldInfo[]>((resolve) => {
       const ini = new Date();
       let count = 0;
+      let countLand = 0;
       const ret: WorldInfo[] = [];
       for (let x = 0; x < width; x++) {
         for (let y = 0; y < height; y++) {
           const info = this.GetInformation(Conversor.FromMercator(new Point(x, y, 0), width, height), 1);
+          if (info.topology >= 0.5) countLand++;
           if (inspector !== null) {
             inspector(info);
           }
@@ -89,7 +92,7 @@ export class WorldGenerator {
         }
       }
       const end = new Date();
-      console.log(`duration ${Helper.TruncDecimals(end.getTime() / 1000 - ini.getTime() / 1000, 3)}s with count: ${count}`);
+      console.log(`duration ${Helper.TruncDecimals(end.getTime() / 1000 - ini.getTime() / 1000, 3)}s with count: ${count} ${countLand}`);
       resolve(ret);
     });
   }
@@ -110,6 +113,74 @@ export class WorldGenerator {
       const end = new Date();
       console.log(`duration ${Helper.TruncDecimals(end.getTime() / 1000 - ini.getTime() / 1000, 3)}s with count: ${count}`);
       resolve(ret);
+    });
+  }
+
+  private getSvg(width: number, height: number): Promise<Vector[][]> {
+    return new Promise<Vector[][]>(resolve => {
+      console.log('start', new Date());
+      const allVectors: Vector[] = [];
+      for (var x = 0; x < width - 1; x++) {
+        for (var y = 0; y < height - 1; y++) {
+          const no = new Point(x, y, 0);
+          if (this.GetInformation(Conversor.FromMercator(no, width, height), 1).topology < 0.5) continue;
+          const ne = new Point((1 + x), y, 0);
+          if (this.GetInformation(Conversor.FromMercator(ne, width, height), 1).topology < 0.5) continue;
+          const so = new Point(x, (1 + y), 0);
+          if (this.GetInformation(Conversor.FromMercator(so, width, height), 1).topology < 0.5) continue;
+          const se = new Point((1 + x), (1 + y), 0);
+          if (this.GetInformation(Conversor.FromMercator(se, width, height), 1).topology < 0.5) continue;
+
+          allVectors.push(new Vector(no, ne));
+          allVectors.push(new Vector(ne, se));
+          allVectors.push(new Vector(se, so));
+          allVectors.push(new Vector(so, no));
+        }
+      }
+      console.log('allVectors', allVectors.length, new Date());
+      let copyAllVectors = [...allVectors];
+      const condensedVectors: Vector[] = [];
+      while (copyAllVectors.length > 0) {
+        const vector = copyAllVectors.pop();
+        if (!vector.inverted.containsIn(copyAllVectors)) {
+          condensedVectors.push(vector);
+        } else {
+          copyAllVectors = copyAllVectors.filter((v) => !v.equals(vector.inverted));
+        }
+      }
+      console.log('condensedVectors', condensedVectors.length, new Date());
+      let copyCondensedVectors = [...condensedVectors];
+      const layeredPaths: Vector[][] = [];
+      while (copyCondensedVectors.length > 0) {
+        const layer: Vector[] = [];
+        const startVector = copyCondensedVectors.pop();
+        layer.push(startVector.copy);
+        let runner = startVector.copy;
+        while (!runner.end.equals(startVector.start)) {
+          const vectorIdx = copyCondensedVectors.findIndex((v) => runner.end.equals(v.start));
+          runner = copyCondensedVectors.splice(vectorIdx, 1)[0];
+          layer.push(runner.copy);
+        }
+        layeredPaths.push(layer);
+      }
+      console.log('layeredPaths', layeredPaths.length, new Date(), layeredPaths);
+      const shrunkenLayeredPaths: Vector[][] = [];
+      layeredPaths.forEach((layer) => {
+        const shrunkenLayer: Vector[] = [];
+        let runner: Vector = layer[0].copy;
+        for (let i = 1; i < layer.length; i++) {
+          if (runner.isCollinear(layer[i].end)) {
+            runner = new Vector(runner.start, layer[i].end);
+          } else {
+            shrunkenLayer.push(runner.copy);
+            runner = layer[i].copy;
+          }
+        }
+        shrunkenLayer.push(runner.copy);
+        shrunkenLayeredPaths.push(shrunkenLayer);
+      });
+      console.log('shrunkenLayeredPaths', shrunkenLayeredPaths.length, new Date(), shrunkenLayeredPaths);
+      resolve(shrunkenLayeredPaths);
     });
   }
 

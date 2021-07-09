@@ -22,11 +22,15 @@ export class Conversor {
   }
 
   public static ToMercator(coordinate: Coordinate, width: number, height: number): Point {
-    return new Point((coordinate.longitude + 180)/(360 / width), (coordinate.latitude + 90)/(180 / height), 0);
+    return new Point(Math.round((coordinate.longitude + 180)/(360 / width)), Math.round((coordinate.latitude + 90)/(180 / height)), 0);
   }
 
   public static FromMercator(point: Point, width: number, height: number): Coordinate {
     return new Coordinate((point.Y * (180 / height)) - 90, (point.X * (360 / width)) - 180);
+  }
+
+  public static ToIdxWidth(point: Point, width: number): number {
+    return (point.X + (point.Y) * width);
   }
 }
 
