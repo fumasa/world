@@ -105,29 +105,29 @@ export class MapToolComponent implements AfterViewInit {
       }
       this.context.putImageData(image, 0, 0);
 
-      this.getSvg(data.world, width, height).then((layers) => {
-        // layers.forEach(layer => {
-        //   const element = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        //   let path = `M ${layer[0].start.X} ${layer[0].start.Y} `;
-        //   layer.forEach(vector => {
-        //     path += `L ${vector.end.X} ${vector.end.Y} `;
-        //   });
-        //   path += 'Z';
-        //   element.setAttribute('d', path);
-        //   const clockwise = layer[0].isClockwise(layer[1]);
-        //   element.style.stroke = '#000';
-        //   element.style.strokeWidth = '1px';
+      this.world.getSvg(width, height).then((layers) => {
+        layers.forEach(layer => {
+          const element = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          let path = `M ${layer[0].start.X} ${layer[0].start.Y} `;
+          layer.forEach(vector => {
+            path += `L ${vector.end.X} ${vector.end.Y} `;
+          });
+          path += 'Z';
+          element.setAttribute('d', path);
+          const clockwise = layer[0].isClockwise(layer[1]);
+          element.style.stroke = '#000';
+          element.style.strokeWidth = '1px';
 
-        //   this.svg.nativeElement.appendChild(element);
-        // });
+          this.svg.nativeElement.appendChild(element);
+        });
 
         // const svg = d3.select(this.svg.nativeElement);
         // svg.attr('width', width).attr('height', height);
-        svg.selectAll("polygon").data(layers).enter().append("polygon").attr("points", (d) => {
-          return d.map(function (d) {
-            return [d.start.X, d.start.Y].join(",");
-          }).join(" ");
-        });
+        // svg.selectAll("polygon").data(layers).enter().append("polygon").attr("points", (d) => {
+        //   return d.map(function (d) {
+        //     return [d.start.X, d.start.Y].join(",");
+        //   }).join(" ");
+        // });
       });
     });
 
@@ -386,74 +386,6 @@ export class MapToolComponent implements AfterViewInit {
 
   //   return image;
   // }
-
-  private getSvg(world: WorldInfo[], width: number, height: number): Promise<Vector[][]> {
-    return new Promise<Vector[][]>(resolve => {
-      console.log('world', world.length, new Date());
-      const allVectors: Vector[] = [];
-      for (var x = 0; x < width - 1; x++) {
-        for (var y = 0; y < height - 1; y++) {
-          const no = new Point(x, y, 0);
-          if (world[Conversor.ToIdxWidth(no, width)].topology < 0.5) continue;
-          const ne = new Point((1 + x), y, 0);
-          if (world[Conversor.ToIdxWidth(ne, width)].topology < 0.5) continue;
-          const so = new Point(x, (1 + y), 0);
-          if (world[Conversor.ToIdxWidth(so, width)].topology < 0.5) continue;
-          const se = new Point((1 + x), (1 + y), 0);
-          if (world[Conversor.ToIdxWidth(se, width)].topology < 0.5) continue;
-
-          allVectors.push(new Vector(no, ne));
-          allVectors.push(new Vector(ne, se));
-          allVectors.push(new Vector(se, so));
-          allVectors.push(new Vector(so, no));
-        }
-      }
-      console.log('allVectors', allVectors.length, new Date());
-      let copyAllVectors = [...allVectors];
-      const condensedVectors: Vector[] = [];
-      while (copyAllVectors.length > 0) {
-        const vector = copyAllVectors.pop();
-        if (!vector.inverted.containsIn(copyAllVectors)) {
-          condensedVectors.push(vector);
-        } else {
-          copyAllVectors = copyAllVectors.filter((v) => !v.equals(vector.inverted));
-        }
-      }
-      console.log('condensedVectors', condensedVectors.length, new Date());
-      let copyCondensedVectors = [...condensedVectors];
-      const layeredPaths: Vector[][] = [];
-      while (copyCondensedVectors.length > 0) {
-        const layer: Vector[] = [];
-        const startVector = copyCondensedVectors.pop();
-        layer.push(startVector.copy);
-        let runner = startVector.copy;
-        while (!runner.end.equals(startVector.start)) {
-          const vectorIdx = copyCondensedVectors.findIndex((v) => runner.end.equals(v.start));
-          runner = copyCondensedVectors.splice(vectorIdx, 1)[0];
-          layer.push(runner.copy);
-        }
-        layeredPaths.push(layer);
-      }
-      console.log('layeredPaths', layeredPaths.length, new Date(), layeredPaths);
-      const shrunkenLayeredPaths: Vector[][] = [];
-      layeredPaths.forEach((layer) => {
-        const shrunkenLayer: Vector[] = [];
-        let runner: Vector = layer[0].copy;
-        for (let i = 1; i < layer.length; i++) {
-          if (runner.isCollinear(layer[i].end)) {
-            runner = new Vector(runner.start, layer[i].end);
-          } else {
-            shrunkenLayer.push(runner.copy);
-            runner = layer[i].copy;
-          }
-        }
-        shrunkenLayer.push(runner.copy);
-        shrunkenLayeredPaths.push(shrunkenLayer);
-      });
-      console.log('shrunkenLayeredPaths', shrunkenLayeredPaths.length, new Date(), shrunkenLayeredPaths);
-      resolve(shrunkenLayeredPaths);
-    });
-  }
 
   // private getShorelines(width: number, height: number): WorldInfo[][] {
   //   const points: WorldInfo[][] = [];

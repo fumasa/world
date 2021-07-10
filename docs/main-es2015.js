@@ -39,8 +39,6 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var src_model_point__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! src/_model/point */ "./src/_model/point.ts");
 /* harmony import */ var d3__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! d3 */ "./node_modules/d3/index.js");
 /* harmony import */ var src_utils_conversor__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! src/_utils/conversor */ "./src/_utils/conversor.ts");
-/* harmony import */ var src_model_vector__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! src/_model/vector */ "./src/_model/vector.ts");
-
 
 
 
@@ -115,27 +113,27 @@ class MapToolComponent {
                 image.data[i] = data.image[i];
             }
             this.context.putImageData(image, 0, 0);
-            this.getSvg(data.world, width, height).then((layers) => {
-                // layers.forEach(layer => {
-                //   const element = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                //   let path = `M ${layer[0].start.X} ${layer[0].start.Y} `;
-                //   layer.forEach(vector => {
-                //     path += `L ${vector.end.X} ${vector.end.Y} `;
-                //   });
-                //   path += 'Z';
-                //   element.setAttribute('d', path);
-                //   const clockwise = layer[0].isClockwise(layer[1]);
-                //   element.style.stroke = '#000';
-                //   element.style.strokeWidth = '1px';
-                //   this.svg.nativeElement.appendChild(element);
-                // });
+            this.world.getSvg(width, height).then((layers) => {
+                layers.forEach(layer => {
+                    const element = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    let path = `M ${layer[0].start.X} ${layer[0].start.Y} `;
+                    layer.forEach(vector => {
+                        path += `L ${vector.end.X} ${vector.end.Y} `;
+                    });
+                    path += 'Z';
+                    element.setAttribute('d', path);
+                    const clockwise = layer[0].isClockwise(layer[1]);
+                    element.style.stroke = '#000';
+                    element.style.strokeWidth = '1px';
+                    this.svg.nativeElement.appendChild(element);
+                });
                 // const svg = d3.select(this.svg.nativeElement);
                 // svg.attr('width', width).attr('height', height);
-                svg.selectAll("polygon").data(layers).enter().append("polygon").attr("points", (d) => {
-                    return d.map(function (d) {
-                        return [d.start.X, d.start.Y].join(",");
-                    }).join(" ");
-                });
+                // svg.selectAll("polygon").data(layers).enter().append("polygon").attr("points", (d) => {
+                //   return d.map(function (d) {
+                //     return [d.start.X, d.start.Y].join(",");
+                //   }).join(" ");
+                // });
             });
         });
         // const svg = d3.select(this.svg.nativeElement);
@@ -313,98 +311,6 @@ class MapToolComponent {
                 console.log(`info svg all:${all} tree:${tree} ore:${ore} ${width}x${height} ${c}`);
                 resolve({ world: points, image: array });
             });
-        });
-    }
-    // private renderGlobe(image: ImageData, mercatorData: Uint8ClampedArray, projection = d3.geoOrthographic()) {
-    //   const width = image.width;
-    //   const height = image.height;
-    //   const data = image.data;
-    //   for (var y = 0, i = -1; y < height; ++y) {
-    //     for (var x = 0; x < width; ++x) {
-    //       var p = projection.invert([x, y]), λ = p[0], φ = p[1];
-    //       if (λ > 180 || λ < -180 || φ > 90 || φ < -90) {
-    //         i += 4;
-    //         continue;
-    //       }
-    //       var q = ((90 - φ) / 180 * height | 0) * width + ((180 + λ) / 360 * width | 0) << 2;
-    //       data[++i] = mercatorData[q];
-    //       data[++i] = mercatorData[++q];
-    //       data[++i] = mercatorData[++q];
-    //       data[++i] = 255;
-    //     }
-    //   }
-    //   return image;
-    // }
-    getSvg(world, width, height) {
-        return new Promise(resolve => {
-            console.log('world', world.length, new Date());
-            const allVectors = [];
-            for (var x = 0; x < width - 1; x++) {
-                for (var y = 0; y < height - 1; y++) {
-                    const no = new src_model_point__WEBPACK_IMPORTED_MODULE_3__["Point"](x, y, 0);
-                    if (world[src_utils_conversor__WEBPACK_IMPORTED_MODULE_5__["Conversor"].ToIdxWidth(no, width)].topology < 0.5)
-                        continue;
-                    const ne = new src_model_point__WEBPACK_IMPORTED_MODULE_3__["Point"]((1 + x), y, 0);
-                    if (world[src_utils_conversor__WEBPACK_IMPORTED_MODULE_5__["Conversor"].ToIdxWidth(ne, width)].topology < 0.5)
-                        continue;
-                    const so = new src_model_point__WEBPACK_IMPORTED_MODULE_3__["Point"](x, (1 + y), 0);
-                    if (world[src_utils_conversor__WEBPACK_IMPORTED_MODULE_5__["Conversor"].ToIdxWidth(so, width)].topology < 0.5)
-                        continue;
-                    const se = new src_model_point__WEBPACK_IMPORTED_MODULE_3__["Point"]((1 + x), (1 + y), 0);
-                    if (world[src_utils_conversor__WEBPACK_IMPORTED_MODULE_5__["Conversor"].ToIdxWidth(se, width)].topology < 0.5)
-                        continue;
-                    allVectors.push(new src_model_vector__WEBPACK_IMPORTED_MODULE_6__["Vector"](no, ne));
-                    allVectors.push(new src_model_vector__WEBPACK_IMPORTED_MODULE_6__["Vector"](ne, se));
-                    allVectors.push(new src_model_vector__WEBPACK_IMPORTED_MODULE_6__["Vector"](se, so));
-                    allVectors.push(new src_model_vector__WEBPACK_IMPORTED_MODULE_6__["Vector"](so, no));
-                }
-            }
-            console.log('allVectors', allVectors.length, new Date());
-            let copyAllVectors = [...allVectors];
-            const condensedVectors = [];
-            while (copyAllVectors.length > 0) {
-                const vector = copyAllVectors.pop();
-                if (!vector.inverted.containsIn(copyAllVectors)) {
-                    condensedVectors.push(vector);
-                }
-                else {
-                    copyAllVectors = copyAllVectors.filter((v) => !v.equals(vector.inverted));
-                }
-            }
-            console.log('condensedVectors', condensedVectors.length, new Date());
-            let copyCondensedVectors = [...condensedVectors];
-            const layeredPaths = [];
-            while (copyCondensedVectors.length > 0) {
-                const layer = [];
-                const startVector = copyCondensedVectors.pop();
-                layer.push(startVector.copy);
-                let runner = startVector.copy;
-                while (!runner.end.equals(startVector.start)) {
-                    const vectorIdx = copyCondensedVectors.findIndex((v) => runner.end.equals(v.start));
-                    runner = copyCondensedVectors.splice(vectorIdx, 1)[0];
-                    layer.push(runner.copy);
-                }
-                layeredPaths.push(layer);
-            }
-            console.log('layeredPaths', layeredPaths.length, new Date(), layeredPaths);
-            const shrunkenLayeredPaths = [];
-            layeredPaths.forEach((layer) => {
-                const shrunkenLayer = [];
-                let runner = layer[0].copy;
-                for (let i = 1; i < layer.length; i++) {
-                    if (runner.isCollinear(layer[i].end)) {
-                        runner = new src_model_vector__WEBPACK_IMPORTED_MODULE_6__["Vector"](runner.start, layer[i].end);
-                    }
-                    else {
-                        shrunkenLayer.push(runner.copy);
-                        runner = layer[i].copy;
-                    }
-                }
-                shrunkenLayer.push(runner.copy);
-                shrunkenLayeredPaths.push(shrunkenLayer);
-            });
-            console.log('shrunkenLayeredPaths', shrunkenLayeredPaths.length, new Date(), shrunkenLayeredPaths);
-            resolve(shrunkenLayeredPaths);
         });
     }
 }
@@ -602,8 +508,9 @@ class WorldGenerator {
     }
     getSvg(width, height) {
         return new Promise(resolve => {
-            console.log('start', new Date());
+            console.log('start', width, height, new Date());
             const allVectors = [];
+            let count = 0;
             for (var x = 0; x < width - 1; x++) {
                 for (var y = 0; y < height - 1; y++) {
                     const no = new src_model_point__WEBPACK_IMPORTED_MODULE_1__["Point"](x, y, 0);
@@ -622,9 +529,10 @@ class WorldGenerator {
                     allVectors.push(new src_model_vector__WEBPACK_IMPORTED_MODULE_7__["Vector"](ne, se));
                     allVectors.push(new src_model_vector__WEBPACK_IMPORTED_MODULE_7__["Vector"](se, so));
                     allVectors.push(new src_model_vector__WEBPACK_IMPORTED_MODULE_7__["Vector"](so, no));
+                    count++;
                 }
             }
-            console.log('allVectors', allVectors.length, new Date());
+            console.log('allVectors', count, allVectors.length, new Date());
             let copyAllVectors = [...allVectors];
             const condensedVectors = [];
             while (copyAllVectors.length > 0) {

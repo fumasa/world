@@ -116,10 +116,11 @@ export class WorldGenerator {
     });
   }
 
-  private getSvg(width: number, height: number): Promise<Vector[][]> {
+  public getSvg(width: number, height: number): Promise<Vector[][]> {
     return new Promise<Vector[][]>(resolve => {
-      console.log('start', new Date());
+      console.log('start', width, height, new Date());
       const allVectors: Vector[] = [];
+      let count = 0;
       for (var x = 0; x < width - 1; x++) {
         for (var y = 0; y < height - 1; y++) {
           const no = new Point(x, y, 0);
@@ -135,9 +136,11 @@ export class WorldGenerator {
           allVectors.push(new Vector(ne, se));
           allVectors.push(new Vector(se, so));
           allVectors.push(new Vector(so, no));
+
+          count++;
         }
       }
-      console.log('allVectors', allVectors.length, new Date());
+      console.log('allVectors', count, allVectors.length, new Date());
       let copyAllVectors = [...allVectors];
       const condensedVectors: Vector[] = [];
       while (copyAllVectors.length > 0) {
