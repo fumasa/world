@@ -4,6 +4,7 @@ import { BiomeColor } from 'src/_utils/biome.color';
 import * as d3 from 'd3';
 import { WorldInfo } from 'src/_model/world.info';
 import { Conversor } from 'src/_utils/conversor';
+import { Helper } from 'src/_utils/helper';
 
 @Component({
   selector: 'map-tool',
@@ -53,18 +54,12 @@ export class MapToolComponent implements AfterViewInit {
       });
       this.context.putImageData(image, 0, 0);
 
-      this.world.getVectors(width, height,
-        (info: WorldInfo) => {
-          return info.topology < 0.5;
-        }).then((layer) => {
-          const element = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-          element.setAttribute('d', layer.AsSvgPath());
-          element.style.stroke = '#000';
-          element.style.fillOpacity = '.5';
-          element.style.strokeWidth = '1px';
+      this.world.getLayer(width, height, (info: WorldInfo) => info.topology < 0.5).then((layer) => Helper.CreatePathElement(this.svg, layer.AsSvgPath()));
 
-          this.svg.nativeElement.appendChild(element);
-        });
+      this.world.getLongitudeLines(width, height).then((layer) => Helper.CreatePathElement(this.svg, layer.AsSvgPath(false), { fillOpacity: '.1', stroke: '#000', strokeWidth: '.5px' }));
+      this.world.getLatitudeLines(width, height, false).then((layer) => Helper.CreatePathElement(this.svg, layer.AsSvgPath(false), { fillOpacity: '.1', stroke: '#000', strokeWidth: '.5px' }));
+      this.world.getEquatorLines(width, height).then((layer) => Helper.CreatePathElement(this.svg, layer.AsSvgPath(false), { fillOpacity: '.1', stroke: '#F00', strokeWidth: '1px' }));
+      this.world.getTropicsAndCirclesLines(width, height).then((layer) => Helper.CreatePathElement(this.svg, layer.AsSvgPath(false), { fillOpacity: '.1', stroke: '#00F', strokeWidth: '1px' }));
     });
   }
 }

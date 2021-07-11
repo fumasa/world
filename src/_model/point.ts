@@ -6,4 +6,8 @@ export class Point {
   public equals(point: Point): boolean {
     return (this.X === point.X && this.Y === point.Y && this.Z === point.Z);
   }
+
+  public copy(): Point {
+    return new Point(this.X, this.Y, this.Y);
+  }
 }

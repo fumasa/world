@@ -77,7 +77,7 @@ export class WorldGenerator {
 
   public GetAllMercatorPoints(width: number, height: number): Promise<WorldInfo[]> {
     return new Promise<WorldInfo[]>((resolve) => {
-      const progress = new Progress(width*height, true);
+      const progress = new Progress('GetAllMercatorPoints', width * height, true);
       const ret: WorldInfo[] = [];
       for (let x = 0; x < width; x++) {
         for (let y = 0; y < height; y++) {
@@ -109,8 +109,8 @@ export class WorldGenerator {
     });
   }
 
-  public getVectors(width: number, height: number, checkPoint: (point: WorldInfo) => boolean = (p) => false): Promise<Layer> {
-    const progress = new Progress(width*height);
+  public getLayer(width: number, height: number, checkPoint: (point: WorldInfo) => boolean = (p) => false): Promise<Layer> {
+    const progress = new Progress('getLayer', width * height);
     return new Promise<Layer>(resolve => {
       progress.start();
       const allVectors: Vector[] = [];
@@ -134,6 +134,106 @@ export class WorldGenerator {
         }
       }
       const layer = Layer.Transform(allVectors);
+      progress.stop();
+      resolve(layer);
+    });
+  }
+
+  public getLongitudeLines(width: number, height: number, rotationSpeedInHours: number = 24): Promise<Layer> {
+    const progress = new Progress('getLongitudeLines', width * height);
+    return new Promise<Layer>(resolve => {
+      progress.start();
+      const allLayers: Layer[] = [];
+      for (var x = 0; x <= width; x++) {
+        const layer: Vector[] = [];
+        let lastPoint: Point = new Point(x, 0, 0);
+        for (var y = 1; y <= height; y++) {
+          const mercatorPoint = new Point(x, y, 0);
+          const coordinate = Conversor.FromMercator(mercatorPoint, width, height);
+
+          if (coordinate.longitude % rotationSpeedInHours === 0) {
+            layer.push(new Vector(lastPoint.copy(), mercatorPoint.copy()));
+            lastPoint = mercatorPoint.copy();
+          }
+        }
+
+        allLayers.push(new Layer([...layer]));
+      }
+      const layer = new Layer([], [...allLayers]);
+      progress.stop();
+      resolve(layer);
+    });
+  }
+
+  public getEquatorLines(width: number, height: number): Promise<Layer> {
+    const progress = new Progress('getEquatorLines', width * height);
+    return new Promise<Layer>(resolve => {
+      progress.start();
+      const vectors: Vector[] = [];
+      let lastPoint: Point = new Point(0, height / 2, 0);
+      for (var x = 1; x <= width; x++) {
+        const mercatorPoint = new Point(x, height / 2, 0);
+
+        vectors.push(new Vector(lastPoint.copy(), mercatorPoint.copy()));
+        lastPoint = mercatorPoint.copy();
+      }
+
+      const layer = new Layer([...vectors]);
+      progress.stop();
+      resolve(layer);
+    });
+  }
+
+  public getLatitudeLines(width: number, height: number, showEquator: boolean = true): Promise<Layer> {
+    const progress = new Progress('getLatitudeLines', width * height);
+    return new Promise<Layer>(resolve => {
+      progress.start();
+      const allLayers: Layer[] = [];
+      for (var y = 0; y <= height; y++) {
+        const layer: Vector[] = [];
+        let lastPoint: Point = new Point(0, y, 0);
+        for (var x = 1; x <= width; x++) {
+          const mercatorPoint = new Point(x, y, 0);
+          const coordinate = Conversor.FromMercator(mercatorPoint, width, height);
+
+          if (coordinate.latitude % 12 === 0) {
+            if ((coordinate.latitude === 0 && showEquator) || coordinate.latitude !== 0) {
+              layer.push(new Vector(lastPoint.copy(), mercatorPoint.copy()));
+              lastPoint = mercatorPoint.copy();
+            }
+          }
+        }
+
+        allLayers.push(new Layer([...layer]));
+      }
+      const layer = new Layer([], [...allLayers]);
+      progress.stop();
+      resolve(layer);
+    });
+  }
+
+  public getTropicsAndCirclesLines(width: number, height: number, inclinationInDegres: number = 23.43): Promise<Layer> {
+    const progress = new Progress('getTropicsAndCirclesLines', width * height);
+    const radius = Math.round(width / (2 * Math.PI));
+    return new Promise<Layer>(resolve => {
+      progress.start();
+      const allLayers: Layer[] = [];
+      const tropicsAndCircles = [inclinationInDegres - 90, -1 * inclinationInDegres, inclinationInDegres, 90 - inclinationInDegres];
+      for (var y = 0; y < tropicsAndCircles.length; y++) {
+        const coordinate = new Coordinate(tropicsAndCircles[y], x, radius);
+        const actualY = Conversor.ToMercator(coordinate, width, height).Y;
+        const layer: Vector[] = [];
+        let lastPoint: Point = new Point(0, actualY, 0);
+        for (var x = 1; x < width; x++) {
+          const mercatorPoint = new Point(x, actualY, 0);
+
+          layer.push(new Vector(lastPoint.copy(), mercatorPoint.copy()));
+          lastPoint = mercatorPoint.copy();
+        }
+
+        allLayers.push(new Layer([...layer]));
+      }
+      const layer = new Layer([], [...allLayers]);
       progress.stop();
       resolve(layer);
     });

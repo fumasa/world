@@ -40,14 +40,15 @@ export class Layer {
     return 0;
   }
 
-  public AsSvgPath(): string {
+  public AsSvgPath(zOnEnd: boolean = true): string {
     let path = '';
     if (this.limit.length > 0) {
       path = 'M ';
       this.limit.forEach((vector, idx) => {
         path += `${idx > 0 ? 'L ' : ''}${vector.start.X} ${vector.start.Y} `;
       });
-      path += `Z `;
+      if (zOnEnd)
+        path += `Z `;
     }
     this.innerLayers.forEach(layer => {
       path += layer.AsSvgPath();

@@ -1,8 +1,9 @@
+import { ElementRef } from '@angular/core';
 import { Point } from 'src/_model/point';
 
 export class Helper {
   public static TruncDecimals(num: number, precision = 4): number {
-    return Math.trunc(Math.pow(10, precision) * num)/Math.pow(10, precision);
+    return Math.trunc(Math.pow(10, precision) * num) / Math.pow(10, precision);
   }
 
   public static CloneAny(data: any): any {
@@ -15,7 +16,7 @@ export class Helper {
 
   public static DecimalPlaces(n: number) {
     let a;
-    return (a=(n.toString().charAt(0)=='-'?n-1:n+1).toString().replace(/^-?[0-9]+\.?([0-9]+)$/,'$1').length)>=1?a:0;
+    return (a = (n.toString().charAt(0) == '-' ? n - 1 : n + 1).toString().replace(/^-?[0-9]+\.?([0-9]+)$/, '$1').length) >= 1 ? a : 0;
   }
 
   public static IdxMatrixToVector(point: Point, width: number, stepX = 1, stepY = 1): number {
@@ -24,6 +25,16 @@ export class Helper {
 
   public static IdxVectorToMatrix(idx: number, width: number, stepX = 1, stepY = 1): Point {
     return new Point((idx % width), (idx / width), 0);
+  }
+
+  public static CreatePathElement(svg: ElementRef<any>,path: string, style: { fillOpacity?: string, stroke?: string, strokeWidth?: string } = { fillOpacity: '.5', stroke: '#000', strokeWidth: '1px' }) {
+    const element = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    element.setAttribute('d', path);
+    element.style.stroke = style.stroke;
+    element.style.fillOpacity = style.fillOpacity;
+    element.style.strokeWidth = style.strokeWidth;
+
+    svg.nativeElement.appendChild(element);
   }
 
   public static Matrix(width = 200, height = 100, action: (x: number, y: number) => void = () => null, initx = 0, inity = 0, increment = 1) {
@@ -35,6 +46,6 @@ export class Helper {
       }
     }
     const end = new Date();
-    console.log(`duration [Matrix] ${ initx > 0 || inity > 0 ? `${initx}:${inity}` : '' } ${width}:${height} ${ increment > 1 ? increment : '' } ${Helper.TruncDecimals(end.getTime() / 1000 - ini.getTime() / 1000, 3)}s with count: ${count}`);
+    console.log(`duration [Matrix] ${initx > 0 || inity > 0 ? `${initx}:${inity}` : ''} ${width}:${height} ${increment > 1 ? increment : ''} ${Helper.TruncDecimals(end.getTime() / 1000 - ini.getTime() / 1000, 3)}s with count: ${count}`);
   }
 }
