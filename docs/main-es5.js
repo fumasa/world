@@ -184,17 +184,17 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
             _this.context.putImageData(image, 0, 0);
 
-            _this.world.getSvg(width, height).then(function (layers) {
+            _this.world.getVectors(width, height).then(function (layers) {
               layers.forEach(function (layer) {
                 var element = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                var path = "M ".concat(layer[0].start.X, " ").concat(layer[0].start.Y, " ");
-                layer.forEach(function (vector) {
+                var path = "M ".concat(layer.limit[0].start.X, " ").concat(layer.limit[0].start.Y, " ");
+                layer.limit.forEach(function (vector) {
                   path += "L ".concat(vector.end.X, " ").concat(vector.end.Y, " ");
                 });
                 path += 'Z';
                 element.setAttribute('d', path);
-                var clockwise = layer[0].isClockwise(layer[1]);
                 element.style.stroke = '#000';
+                element.style.fillOpacity = '.5';
                 element.style.strokeWidth = '1px';
 
                 _this.svg.nativeElement.appendChild(element);
@@ -453,7 +453,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
           _angular_core__WEBPACK_IMPORTED_MODULE_0__["ɵɵelementEnd"]();
         }
       },
-      styles: [".centerbox[_ngcontent-%COMP%] {\n  display: -webkit-box;\n  -webkit-box-orient: horizontal;\n  -webkit-box-pack: center;\n  -webkit-box-align: center;\n  display: -moz-box;\n  -moz-box-pack: center;\n  -moz-box-align: center;\n  width: 90%;\n  height: 90%;\n  padding: 0;\n  margin: 20px 20px 20px 20px;\n}\n\ncanvas[_ngcontent-%COMP%], svg[_ngcontent-%COMP%] {\n  overflow: hidden;\n  border: 1px solid black;\n  position: absolute;\n  top: 20px;\n  left: 20px;\n}\n\nsvg[_ngcontent-%COMP%] {\n  display: block;\n}\n\npolygon[_ngcontent-%COMP%] {\n  fill: black;\n}\n/*# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi9ob21lL2Z1bWFzYS93b3JsZC9zcmMvX2NvbXBvbmVudC9tYXAtdG9vbC9tYXAtdG9vbC5jb21wb25lbnQuc2NzcyIsInNyYy9fY29tcG9uZW50L21hcC10b29sL21hcC10b29sLmNvbXBvbmVudC5zY3NzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiJBQUFBO0VBQ0Usb0JBQUE7RUFDQSw4QkFBQTtFQUNBLHdCQUFBO0VBQ0EseUJBQUE7RUFFQSxpQkFBQTtFQUVBLHFCQUFBO0VBQ0Esc0JBQUE7RUFFQSxVQUFBO0VBQ0EsV0FBQTtFQUNBLFVBQUE7RUFDQSwyQkFBQTtBQ0RGOztBRElBO0VBQ0UsZ0JBQUE7RUFDQSx1QkFBQTtFQUVBLGtCQUFBO0VBQ0EsU0FBQTtFQUNBLFVBQUE7QUNGRjs7QURLQTtFQUNFLGNBQUE7QUNGRjs7QURLQTtFQUNFLFdBQUE7QUNGRiIsImZpbGUiOiJzcmMvX2NvbXBvbmVudC9tYXAtdG9vbC9tYXAtdG9vbC5jb21wb25lbnQuc2NzcyIsInNvdXJjZXNDb250ZW50IjpbIi5jZW50ZXJib3gge1xyXG4gIGRpc3BsYXk6IC13ZWJraXQtYm94O1xyXG4gIC13ZWJraXQtYm94LW9yaWVudDogaG9yaXpvbnRhbDtcclxuICAtd2Via2l0LWJveC1wYWNrOiBjZW50ZXI7XHJcbiAgLXdlYmtpdC1ib3gtYWxpZ246IGNlbnRlcjtcclxuXHJcbiAgZGlzcGxheTogLW1vei1ib3g7XHJcbiAgLW1vei1ib3gtb3JpZW50OiBob3Jpem9udGFsO1xyXG4gIC1tb3otYm94LXBhY2s6IGNlbnRlcjtcclxuICAtbW96LWJveC1hbGlnbjogY2VudGVyO1xyXG5cclxuICB3aWR0aDogOTAlO1xyXG4gIGhlaWdodDogOTAlO1xyXG4gIHBhZGRpbmc6IDA7XHJcbiAgbWFyZ2luOiAyMHB4IDIwcHggMjBweCAyMHB4O1xyXG59XHJcblxyXG5jYW52YXMsIHN2ZyB7XHJcbiAgb3ZlcmZsb3c6IGhpZGRlbjtcclxuICBib3JkZXI6IDFweCBzb2xpZCBibGFjaztcclxuICAvLyBib3JkZXItcmFkaXVzOiAyMHB4O1xyXG4gIHBvc2l0aW9uOiBhYnNvbHV0ZTtcclxuICB0b3A6IDIwcHg7XHJcbiAgbGVmdDogMjBweDtcclxufVxyXG5cclxuc3ZnIHtcclxuICBkaXNwbGF5OiBibG9jaztcclxufVxyXG5cclxucG9seWdvbiB7IFxyXG4gIGZpbGw6IGJsYWNrO1xyXG59IiwiLmNlbnRlcmJveCB7XG4gIGRpc3BsYXk6IC13ZWJraXQtYm94O1xuICAtd2Via2l0LWJveC1vcmllbnQ6IGhvcml6b250YWw7XG4gIC13ZWJraXQtYm94LXBhY2s6IGNlbnRlcjtcbiAgLXdlYmtpdC1ib3gtYWxpZ246IGNlbnRlcjtcbiAgZGlzcGxheTogLW1vei1ib3g7XG4gIC1tb3otYm94LW9yaWVudDogaG9yaXpvbnRhbDtcbiAgLW1vei1ib3gtcGFjazogY2VudGVyO1xuICAtbW96LWJveC1hbGlnbjogY2VudGVyO1xuICB3aWR0aDogOTAlO1xuICBoZWlnaHQ6IDkwJTtcbiAgcGFkZGluZzogMDtcbiAgbWFyZ2luOiAyMHB4IDIwcHggMjBweCAyMHB4O1xufVxuXG5jYW52YXMsIHN2ZyB7XG4gIG92ZXJmbG93OiBoaWRkZW47XG4gIGJvcmRlcjogMXB4IHNvbGlkIGJsYWNrO1xuICBwb3NpdGlvbjogYWJzb2x1dGU7XG4gIHRvcDogMjBweDtcbiAgbGVmdDogMjBweDtcbn1cblxuc3ZnIHtcbiAgZGlzcGxheTogYmxvY2s7XG59XG5cbnBvbHlnb24ge1xuICBmaWxsOiBibGFjaztcbn0iXX0= */"]
+      styles: [".centerbox[_ngcontent-%COMP%] {\n  display: -webkit-box;\n  -webkit-box-orient: horizontal;\n  -webkit-box-pack: center;\n  -webkit-box-align: center;\n  display: -moz-box;\n  -moz-box-pack: center;\n  -moz-box-align: center;\n  width: 90%;\n  height: 90%;\n  padding: 0;\n  margin: 20px 20px 20px 20px;\n}\n\ncanvas[_ngcontent-%COMP%], svg[_ngcontent-%COMP%] {\n  overflow: hidden;\n  border: 1px solid black;\n  position: absolute;\n  top: 20px;\n  left: 20px;\n}\n\nsvg[_ngcontent-%COMP%] {\n  display: block;\n  fill: black;\n  fill-rule: evenodd;\n}\n/*# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi9ob21lL2Z1bWFzYS93b3JsZC9zcmMvX2NvbXBvbmVudC9tYXAtdG9vbC9tYXAtdG9vbC5jb21wb25lbnQuc2NzcyIsInNyYy9fY29tcG9uZW50L21hcC10b29sL21hcC10b29sLmNvbXBvbmVudC5zY3NzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiJBQUFBO0VBQ0Usb0JBQUE7RUFDQSw4QkFBQTtFQUNBLHdCQUFBO0VBQ0EseUJBQUE7RUFFQSxpQkFBQTtFQUVBLHFCQUFBO0VBQ0Esc0JBQUE7RUFFQSxVQUFBO0VBQ0EsV0FBQTtFQUNBLFVBQUE7RUFDQSwyQkFBQTtBQ0RGOztBRElBO0VBQ0UsZ0JBQUE7RUFDQSx1QkFBQTtFQUVBLGtCQUFBO0VBQ0EsU0FBQTtFQUNBLFVBQUE7QUNGRjs7QURLQTtFQUNFLGNBQUE7RUFDQSxXQUFBO0VBQ0Esa0JBQUE7QUNGRiIsImZpbGUiOiJzcmMvX2NvbXBvbmVudC9tYXAtdG9vbC9tYXAtdG9vbC5jb21wb25lbnQuc2NzcyIsInNvdXJjZXNDb250ZW50IjpbIi5jZW50ZXJib3gge1xyXG4gIGRpc3BsYXk6IC13ZWJraXQtYm94O1xyXG4gIC13ZWJraXQtYm94LW9yaWVudDogaG9yaXpvbnRhbDtcclxuICAtd2Via2l0LWJveC1wYWNrOiBjZW50ZXI7XHJcbiAgLXdlYmtpdC1ib3gtYWxpZ246IGNlbnRlcjtcclxuXHJcbiAgZGlzcGxheTogLW1vei1ib3g7XHJcbiAgLW1vei1ib3gtb3JpZW50OiBob3Jpem9udGFsO1xyXG4gIC1tb3otYm94LXBhY2s6IGNlbnRlcjtcclxuICAtbW96LWJveC1hbGlnbjogY2VudGVyO1xyXG5cclxuICB3aWR0aDogOTAlO1xyXG4gIGhlaWdodDogOTAlO1xyXG4gIHBhZGRpbmc6IDA7XHJcbiAgbWFyZ2luOiAyMHB4IDIwcHggMjBweCAyMHB4O1xyXG59XHJcblxyXG5jYW52YXMsIHN2ZyB7XHJcbiAgb3ZlcmZsb3c6IGhpZGRlbjtcclxuICBib3JkZXI6IDFweCBzb2xpZCBibGFjaztcclxuICAvLyBib3JkZXItcmFkaXVzOiAyMHB4O1xyXG4gIHBvc2l0aW9uOiBhYnNvbHV0ZTtcclxuICB0b3A6IDIwcHg7XHJcbiAgbGVmdDogMjBweDtcclxufVxyXG5cclxuc3ZnIHtcclxuICBkaXNwbGF5OiBibG9jaztcclxuICBmaWxsOiBibGFjaztcclxuICBmaWxsLXJ1bGU6IGV2ZW5vZGQ7XHJcbn1cclxuXHJcbi8vIHBvbHlnb24geyBcclxuLy8gICBmaWxsOiBibGFjaztcclxuLy8gfSIsIi5jZW50ZXJib3gge1xuICBkaXNwbGF5OiAtd2Via2l0LWJveDtcbiAgLXdlYmtpdC1ib3gtb3JpZW50OiBob3Jpem9udGFsO1xuICAtd2Via2l0LWJveC1wYWNrOiBjZW50ZXI7XG4gIC13ZWJraXQtYm94LWFsaWduOiBjZW50ZXI7XG4gIGRpc3BsYXk6IC1tb3otYm94O1xuICAtbW96LWJveC1vcmllbnQ6IGhvcml6b250YWw7XG4gIC1tb3otYm94LXBhY2s6IGNlbnRlcjtcbiAgLW1vei1ib3gtYWxpZ246IGNlbnRlcjtcbiAgd2lkdGg6IDkwJTtcbiAgaGVpZ2h0OiA5MCU7XG4gIHBhZGRpbmc6IDA7XG4gIG1hcmdpbjogMjBweCAyMHB4IDIwcHggMjBweDtcbn1cblxuY2FudmFzLCBzdmcge1xuICBvdmVyZmxvdzogaGlkZGVuO1xuICBib3JkZXI6IDFweCBzb2xpZCBibGFjaztcbiAgcG9zaXRpb246IGFic29sdXRlO1xuICB0b3A6IDIwcHg7XG4gIGxlZnQ6IDIwcHg7XG59XG5cbnN2ZyB7XG4gIGRpc3BsYXk6IGJsb2NrO1xuICBmaWxsOiBibGFjaztcbiAgZmlsbC1ydWxlOiBldmVub2RkO1xufSJdfQ== */"]
     });
     /*@__PURE__*/
 
@@ -591,6 +591,12 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     var src_model_vector__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(
     /*! src/_model/vector */
     "./src/_model/vector.ts");
+    /* harmony import */
+
+
+    var src_model_layer__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(
+    /*! src/_model/layer */
+    "./src/_model/layer.ts");
 
     var WorldGenerator = /*#__PURE__*/function () {
       function WorldGenerator() {
@@ -745,12 +751,12 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
           });
         }
       }, {
-        key: "getSvg",
-        value: function getSvg(width, height) {
+        key: "getVectors",
+        value: function getVectors(width, height) {
           var _this5 = this;
 
           return new Promise(function (resolve) {
-            console.log('start', width, height, new Date());
+            console.log("[getVectors] start ".concat(width, "x").concat(height), new Date());
             var allVectors = [];
             var count = 0;
 
@@ -764,6 +770,68 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
                 if (_this5.GetInformation(src_utils_conversor__WEBPACK_IMPORTED_MODULE_4__["Conversor"].FromMercator(so, width, height), 1).topology < 0.5) continue;
                 var se = new src_model_point__WEBPACK_IMPORTED_MODULE_1__["Point"](1 + x, 1 + y, 0);
                 if (_this5.GetInformation(src_utils_conversor__WEBPACK_IMPORTED_MODULE_4__["Conversor"].FromMercator(se, width, height), 1).topology < 0.5) continue;
+                src_model_vector__WEBPACK_IMPORTED_MODULE_7__["Vector"].AddInIfInvertNotExistsAndRemoveItFrom(allVectors, new src_model_vector__WEBPACK_IMPORTED_MODULE_7__["Vector"](no, ne));
+                src_model_vector__WEBPACK_IMPORTED_MODULE_7__["Vector"].AddInIfInvertNotExistsAndRemoveItFrom(allVectors, new src_model_vector__WEBPACK_IMPORTED_MODULE_7__["Vector"](ne, se));
+                src_model_vector__WEBPACK_IMPORTED_MODULE_7__["Vector"].AddInIfInvertNotExistsAndRemoveItFrom(allVectors, new src_model_vector__WEBPACK_IMPORTED_MODULE_7__["Vector"](se, so));
+                src_model_vector__WEBPACK_IMPORTED_MODULE_7__["Vector"].AddInIfInvertNotExistsAndRemoveItFrom(allVectors, new src_model_vector__WEBPACK_IMPORTED_MODULE_7__["Vector"](so, no));
+                count++;
+              }
+            }
+
+            console.log('condensedVectors', allVectors.length, new Date());
+            var copyCondensedVectors = [].concat(allVectors);
+            var layers = [];
+
+            var _loop = function _loop() {
+              var vectors = [];
+              var startVector = copyCondensedVectors.pop();
+              vectors.push(startVector.copy);
+              var runner = startVector.copy;
+
+              while (!runner.end.equals(startVector.start)) {
+                var vectorIdx = copyCondensedVectors.findIndex(function (v) {
+                  return runner.end.equals(v.start);
+                });
+                runner = copyCondensedVectors.splice(vectorIdx, 1)[0];
+                vectors.push(runner.copy);
+              }
+
+              layers.push(new src_model_layer__WEBPACK_IMPORTED_MODULE_8__["Layer"](vectors).shrunk());
+            };
+
+            while (copyCondensedVectors.length > 0) {
+              _loop();
+            }
+
+            console.log('layers', layers.length, new Date()); // const shrunkenLayers: Layer[] = [];
+            // layers.forEach((layer) => {
+            //   shrunkenLayers.push(layer.shrunk());
+            // });
+            // console.log('shrunkenLayeredPaths', shrunkenLayers.length, new Date());
+
+            resolve(layers);
+          });
+        }
+      }, {
+        key: "getSvg",
+        value: function getSvg(width, height) {
+          var _this6 = this;
+
+          return new Promise(function (resolve) {
+            console.log('start', width, height, new Date());
+            var allVectors = [];
+            var count = 0;
+
+            for (var x = 0; x < width - 1; x++) {
+              for (var y = 0; y < height - 1; y++) {
+                var no = new src_model_point__WEBPACK_IMPORTED_MODULE_1__["Point"](x, y, 0);
+                if (_this6.GetInformation(src_utils_conversor__WEBPACK_IMPORTED_MODULE_4__["Conversor"].FromMercator(no, width, height), 1).topology < 0.5) continue;
+                var ne = new src_model_point__WEBPACK_IMPORTED_MODULE_1__["Point"](1 + x, y, 0);
+                if (_this6.GetInformation(src_utils_conversor__WEBPACK_IMPORTED_MODULE_4__["Conversor"].FromMercator(ne, width, height), 1).topology < 0.5) continue;
+                var so = new src_model_point__WEBPACK_IMPORTED_MODULE_1__["Point"](x, 1 + y, 0);
+                if (_this6.GetInformation(src_utils_conversor__WEBPACK_IMPORTED_MODULE_4__["Conversor"].FromMercator(so, width, height), 1).topology < 0.5) continue;
+                var se = new src_model_point__WEBPACK_IMPORTED_MODULE_1__["Point"](1 + x, 1 + y, 0);
+                if (_this6.GetInformation(src_utils_conversor__WEBPACK_IMPORTED_MODULE_4__["Conversor"].FromMercator(se, width, height), 1).topology < 0.5) continue;
                 allVectors.push(new src_model_vector__WEBPACK_IMPORTED_MODULE_7__["Vector"](no, ne));
                 allVectors.push(new src_model_vector__WEBPACK_IMPORTED_MODULE_7__["Vector"](ne, se));
                 allVectors.push(new src_model_vector__WEBPACK_IMPORTED_MODULE_7__["Vector"](se, so));
@@ -776,7 +844,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
             var copyAllVectors = [].concat(allVectors);
             var condensedVectors = [];
 
-            var _loop = function _loop() {
+            var _loop2 = function _loop2() {
               var vector = copyAllVectors.pop();
 
               if (!vector.inverted.containsIn(copyAllVectors)) {
@@ -789,14 +857,14 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
             };
 
             while (copyAllVectors.length > 0) {
-              _loop();
+              _loop2();
             }
 
             console.log('condensedVectors', condensedVectors.length, new Date());
             var copyCondensedVectors = [].concat(condensedVectors);
             var layeredPaths = [];
 
-            var _loop2 = function _loop2() {
+            var _loop3 = function _loop3() {
               var layer = [];
               var startVector = copyCondensedVectors.pop();
               layer.push(startVector.copy);
@@ -814,10 +882,10 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
             };
 
             while (copyCondensedVectors.length > 0) {
-              _loop2();
+              _loop3();
             }
 
-            console.log('layeredPaths', layeredPaths.length, new Date(), layeredPaths);
+            console.log('layeredPaths', layeredPaths.length, new Date());
             var shrunkenLayeredPaths = [];
             layeredPaths.forEach(function (layer) {
               var shrunkenLayer = [];
@@ -835,28 +903,28 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
               shrunkenLayer.push(runner.copy);
               shrunkenLayeredPaths.push(shrunkenLayer);
             });
-            console.log('shrunkenLayeredPaths', shrunkenLayeredPaths.length, new Date(), shrunkenLayeredPaths);
+            console.log('shrunkenLayeredPaths', shrunkenLayeredPaths.length, new Date());
             resolve(shrunkenLayeredPaths);
           });
         }
       }, {
         key: "GetShorlines",
         value: function GetShorlines() {
-          var _this6 = this;
+          var _this7 = this;
 
           var step = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0.0001;
           var ret = [];
           var coordinate = new src_model_coordinate__WEBPACK_IMPORTED_MODULE_3__["Coordinate"](0, 0);
           var polygon = this.probePolygon(coordinate, step);
           ret.push(polygon.map(function (p) {
-            return _this6.GetInformation(p);
+            return _this7.GetInformation(p);
           }));
           return ret;
         }
       }, {
         key: "probePolygon",
         value: function probePolygon() {
-          var _this7 = this;
+          var _this8 = this;
 
           var coordinate = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : new src_model_coordinate__WEBPACK_IMPORTED_MODULE_3__["Coordinate"](0, 0);
           var step = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0.0001;
@@ -868,13 +936,13 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
             points = this.probeNearShorepoints(coordinate, step);
           } while (points === []);
 
-          var _loop3 = function _loop3() {
+          var _loop4 = function _loop4() {
             var newPoints = [];
             points.forEach(function (point) {
               // const point = points[0];
               polygon.push(point);
               console.log('point', point, polygon.length);
-              newPoints.push.apply(newPoints, _toConsumableArray(_this7.probeNearShorepoints(point, step)));
+              newPoints.push.apply(newPoints, _toConsumableArray(_this8.probeNearShorepoints(point, step)));
             });
             var beforeCount = newPoints.length;
             points = newPoints.filter(function (newPoint) {
@@ -894,7 +962,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
           };
 
           while (points.length !== 0) {
-            _loop3();
+            _loop4();
           }
 
           console.log('finito', polygon);
@@ -1003,6 +1071,71 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
   },
 
   /***/
+  "./src/_model/layer.ts":
+  /*!*****************************!*\
+    !*** ./src/_model/layer.ts ***!
+    \*****************************/
+
+  /*! exports provided: Layer */
+
+  /***/
+  function src_modelLayerTs(module, __webpack_exports__, __webpack_require__) {
+    "use strict";
+
+    __webpack_require__.r(__webpack_exports__);
+    /* harmony export (binding) */
+
+
+    __webpack_require__.d(__webpack_exports__, "Layer", function () {
+      return Layer;
+    });
+    /* harmony import */
+
+
+    var _vector__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(
+    /*! ./vector */
+    "./src/_model/vector.ts");
+
+    var Layer = /*#__PURE__*/function () {
+      function Layer() {
+        var limit = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
+        var innerLayers = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
+
+        _classCallCheck(this, Layer);
+
+        this.limit = limit;
+        this.innerLayers = innerLayers;
+      }
+
+      _createClass(Layer, [{
+        key: "shrunk",
+        value: function shrunk() {
+          var layer = _toConsumableArray(this.limit);
+
+          var array = [];
+          var runner = layer[0].copy;
+
+          for (var i = 1; i < layer.length; i++) {
+            if (runner.isCollinear(layer[i].end)) {
+              runner = new _vector__WEBPACK_IMPORTED_MODULE_0__["Vector"](runner.start, layer[i].end);
+            } else {
+              array.push(runner.copy);
+              runner = layer[i].copy;
+            }
+          }
+
+          array.push(runner.copy);
+          return new Layer(array, this.innerLayers);
+        }
+      }]);
+
+      return Layer;
+    }();
+    /***/
+
+  },
+
+  /***/
   "./src/_model/point.ts":
   /*!*****************************!*\
     !*** ./src/_model/point.ts ***!
@@ -1035,6 +1168,22 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
         key: "equals",
         value: function equals(point) {
           return this.X === point.X && this.Y === point.Y && this.Z === point.Z;
+        }
+      }, {
+        key: "inside",
+        value: function inside(vectors) {
+          var inside = false;
+
+          for (var i = 0, j = vectors.length - 1; i < vectors.length; j = i++) {
+            var xi = vectors[i].start.X,
+                yi = vectors[i].start.Y;
+            var xj = vectors[j].end.X,
+                yj = vectors[j].end.Y;
+            var intersect = yi > this.Y != yj > this.Y && this.X < (xj - xi) * (this.Y - yi) / (yj - yi) + xi;
+            if (intersect) inside = !inside;
+          }
+
+          return inside;
         }
       }]);
 
@@ -1110,6 +1259,21 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
         key: "copy",
         get: function get() {
           return new Vector(this.start, this.end);
+        }
+      }], [{
+        key: "AddInIfInvertNotExistsAndRemoveItFrom",
+        value: function AddInIfInvertNotExistsAndRemoveItFrom(vectors, vector) {
+          var vectorIdx = vectors.findIndex(function (v) {
+            return vector.inverted.equals(v);
+          });
+
+          if (vectorIdx > -1) {
+            vectors.splice(vectorIdx, 1);
+          } else {
+            vectors.push(vector);
+          }
+
+          return vectors;
         }
       }]);
 
@@ -1489,6 +1653,29 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
           var stepX = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 1;
           var stepY = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 1;
           return new src_model_point__WEBPACK_IMPORTED_MODULE_0__["Point"](idx % width, idx / width, 0);
+        }
+      }, {
+        key: "Matrix",
+        value: function Matrix() {
+          var width = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 200;
+          var height = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 100;
+          var action = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : function () {
+            return null;
+          };
+          var initx = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 0;
+          var inity = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : 0;
+          var increment = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : 1;
+          var ini = new Date();
+          var count = 0;
+
+          for (var y = inity; y < height; y += increment) {
+            for (var x = initx; x < width; y += increment) {
+              if (action !== null) action(x, y);
+            }
+          }
+
+          var end = new Date();
+          console.log("duration [Matrix] ".concat(initx > 0 || inity > 0 ? "".concat(initx, ":").concat(inity) : '', " ").concat(width, ":").concat(height, " ").concat(increment > 1 ? increment : '', " ").concat(Helper.TruncDecimals(end.getTime() / 1000 - ini.getTime() / 1000, 3), "s with count: ").concat(count));
         }
       }]);
 

@@ -113,17 +113,17 @@ class MapToolComponent {
                 image.data[i] = data.image[i];
             }
             this.context.putImageData(image, 0, 0);
-            this.world.getSvg(width, height).then((layers) => {
+            this.world.getVectors(width, height).then((layers) => {
                 layers.forEach(layer => {
                     const element = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                    let path = `M ${layer[0].start.X} ${layer[0].start.Y} `;
-                    layer.forEach(vector => {
+                    let path = `M ${layer.limit[0].start.X} ${layer.limit[0].start.Y} `;
+                    layer.limit.forEach(vector => {
                         path += `L ${vector.end.X} ${vector.end.Y} `;
                     });
                     path += 'Z';
                     element.setAttribute('d', path);
-                    const clockwise = layer[0].isClockwise(layer[1]);
                     element.style.stroke = '#000';
+                    element.style.fillOpacity = '.5';
                     element.style.strokeWidth = '1px';
                     this.svg.nativeElement.appendChild(element);
                 });
@@ -330,7 +330,7 @@ MapToolComponent.ɵcmp = _angular_core__WEBPACK_IMPORTED_MODULE_0__["ɵɵdefineC
         _angular_core__WEBPACK_IMPORTED_MODULE_0__["ɵɵnamespaceSVG"]();
         _angular_core__WEBPACK_IMPORTED_MODULE_0__["ɵɵelement"](3, "svg", null, 3);
         _angular_core__WEBPACK_IMPORTED_MODULE_0__["ɵɵelementEnd"]();
-    } }, styles: [".centerbox[_ngcontent-%COMP%] {\n  display: -webkit-box;\n  -webkit-box-orient: horizontal;\n  -webkit-box-pack: center;\n  -webkit-box-align: center;\n  display: -moz-box;\n  -moz-box-pack: center;\n  -moz-box-align: center;\n  width: 90%;\n  height: 90%;\n  padding: 0;\n  margin: 20px 20px 20px 20px;\n}\n\ncanvas[_ngcontent-%COMP%], svg[_ngcontent-%COMP%] {\n  overflow: hidden;\n  border: 1px solid black;\n  position: absolute;\n  top: 20px;\n  left: 20px;\n}\n\nsvg[_ngcontent-%COMP%] {\n  display: block;\n}\n\npolygon[_ngcontent-%COMP%] {\n  fill: black;\n}\n/*# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi9ob21lL2Z1bWFzYS93b3JsZC9zcmMvX2NvbXBvbmVudC9tYXAtdG9vbC9tYXAtdG9vbC5jb21wb25lbnQuc2NzcyIsInNyYy9fY29tcG9uZW50L21hcC10b29sL21hcC10b29sLmNvbXBvbmVudC5zY3NzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiJBQUFBO0VBQ0Usb0JBQUE7RUFDQSw4QkFBQTtFQUNBLHdCQUFBO0VBQ0EseUJBQUE7RUFFQSxpQkFBQTtFQUVBLHFCQUFBO0VBQ0Esc0JBQUE7RUFFQSxVQUFBO0VBQ0EsV0FBQTtFQUNBLFVBQUE7RUFDQSwyQkFBQTtBQ0RGOztBRElBO0VBQ0UsZ0JBQUE7RUFDQSx1QkFBQTtFQUVBLGtCQUFBO0VBQ0EsU0FBQTtFQUNBLFVBQUE7QUNGRjs7QURLQTtFQUNFLGNBQUE7QUNGRjs7QURLQTtFQUNFLFdBQUE7QUNGRiIsImZpbGUiOiJzcmMvX2NvbXBvbmVudC9tYXAtdG9vbC9tYXAtdG9vbC5jb21wb25lbnQuc2NzcyIsInNvdXJjZXNDb250ZW50IjpbIi5jZW50ZXJib3gge1xyXG4gIGRpc3BsYXk6IC13ZWJraXQtYm94O1xyXG4gIC13ZWJraXQtYm94LW9yaWVudDogaG9yaXpvbnRhbDtcclxuICAtd2Via2l0LWJveC1wYWNrOiBjZW50ZXI7XHJcbiAgLXdlYmtpdC1ib3gtYWxpZ246IGNlbnRlcjtcclxuXHJcbiAgZGlzcGxheTogLW1vei1ib3g7XHJcbiAgLW1vei1ib3gtb3JpZW50OiBob3Jpem9udGFsO1xyXG4gIC1tb3otYm94LXBhY2s6IGNlbnRlcjtcclxuICAtbW96LWJveC1hbGlnbjogY2VudGVyO1xyXG5cclxuICB3aWR0aDogOTAlO1xyXG4gIGhlaWdodDogOTAlO1xyXG4gIHBhZGRpbmc6IDA7XHJcbiAgbWFyZ2luOiAyMHB4IDIwcHggMjBweCAyMHB4O1xyXG59XHJcblxyXG5jYW52YXMsIHN2ZyB7XHJcbiAgb3ZlcmZsb3c6IGhpZGRlbjtcclxuICBib3JkZXI6IDFweCBzb2xpZCBibGFjaztcclxuICAvLyBib3JkZXItcmFkaXVzOiAyMHB4O1xyXG4gIHBvc2l0aW9uOiBhYnNvbHV0ZTtcclxuICB0b3A6IDIwcHg7XHJcbiAgbGVmdDogMjBweDtcclxufVxyXG5cclxuc3ZnIHtcclxuICBkaXNwbGF5OiBibG9jaztcclxufVxyXG5cclxucG9seWdvbiB7IFxyXG4gIGZpbGw6IGJsYWNrO1xyXG59IiwiLmNlbnRlcmJveCB7XG4gIGRpc3BsYXk6IC13ZWJraXQtYm94O1xuICAtd2Via2l0LWJveC1vcmllbnQ6IGhvcml6b250YWw7XG4gIC13ZWJraXQtYm94LXBhY2s6IGNlbnRlcjtcbiAgLXdlYmtpdC1ib3gtYWxpZ246IGNlbnRlcjtcbiAgZGlzcGxheTogLW1vei1ib3g7XG4gIC1tb3otYm94LW9yaWVudDogaG9yaXpvbnRhbDtcbiAgLW1vei1ib3gtcGFjazogY2VudGVyO1xuICAtbW96LWJveC1hbGlnbjogY2VudGVyO1xuICB3aWR0aDogOTAlO1xuICBoZWlnaHQ6IDkwJTtcbiAgcGFkZGluZzogMDtcbiAgbWFyZ2luOiAyMHB4IDIwcHggMjBweCAyMHB4O1xufVxuXG5jYW52YXMsIHN2ZyB7XG4gIG92ZXJmbG93OiBoaWRkZW47XG4gIGJvcmRlcjogMXB4IHNvbGlkIGJsYWNrO1xuICBwb3NpdGlvbjogYWJzb2x1dGU7XG4gIHRvcDogMjBweDtcbiAgbGVmdDogMjBweDtcbn1cblxuc3ZnIHtcbiAgZGlzcGxheTogYmxvY2s7XG59XG5cbnBvbHlnb24ge1xuICBmaWxsOiBibGFjaztcbn0iXX0= */"] });
+    } }, styles: [".centerbox[_ngcontent-%COMP%] {\n  display: -webkit-box;\n  -webkit-box-orient: horizontal;\n  -webkit-box-pack: center;\n  -webkit-box-align: center;\n  display: -moz-box;\n  -moz-box-pack: center;\n  -moz-box-align: center;\n  width: 90%;\n  height: 90%;\n  padding: 0;\n  margin: 20px 20px 20px 20px;\n}\n\ncanvas[_ngcontent-%COMP%], svg[_ngcontent-%COMP%] {\n  overflow: hidden;\n  border: 1px solid black;\n  position: absolute;\n  top: 20px;\n  left: 20px;\n}\n\nsvg[_ngcontent-%COMP%] {\n  display: block;\n  fill: black;\n  fill-rule: evenodd;\n}\n/*# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi9ob21lL2Z1bWFzYS93b3JsZC9zcmMvX2NvbXBvbmVudC9tYXAtdG9vbC9tYXAtdG9vbC5jb21wb25lbnQuc2NzcyIsInNyYy9fY29tcG9uZW50L21hcC10b29sL21hcC10b29sLmNvbXBvbmVudC5zY3NzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiJBQUFBO0VBQ0Usb0JBQUE7RUFDQSw4QkFBQTtFQUNBLHdCQUFBO0VBQ0EseUJBQUE7RUFFQSxpQkFBQTtFQUVBLHFCQUFBO0VBQ0Esc0JBQUE7RUFFQSxVQUFBO0VBQ0EsV0FBQTtFQUNBLFVBQUE7RUFDQSwyQkFBQTtBQ0RGOztBRElBO0VBQ0UsZ0JBQUE7RUFDQSx1QkFBQTtFQUVBLGtCQUFBO0VBQ0EsU0FBQTtFQUNBLFVBQUE7QUNGRjs7QURLQTtFQUNFLGNBQUE7RUFDQSxXQUFBO0VBQ0Esa0JBQUE7QUNGRiIsImZpbGUiOiJzcmMvX2NvbXBvbmVudC9tYXAtdG9vbC9tYXAtdG9vbC5jb21wb25lbnQuc2NzcyIsInNvdXJjZXNDb250ZW50IjpbIi5jZW50ZXJib3gge1xyXG4gIGRpc3BsYXk6IC13ZWJraXQtYm94O1xyXG4gIC13ZWJraXQtYm94LW9yaWVudDogaG9yaXpvbnRhbDtcclxuICAtd2Via2l0LWJveC1wYWNrOiBjZW50ZXI7XHJcbiAgLXdlYmtpdC1ib3gtYWxpZ246IGNlbnRlcjtcclxuXHJcbiAgZGlzcGxheTogLW1vei1ib3g7XHJcbiAgLW1vei1ib3gtb3JpZW50OiBob3Jpem9udGFsO1xyXG4gIC1tb3otYm94LXBhY2s6IGNlbnRlcjtcclxuICAtbW96LWJveC1hbGlnbjogY2VudGVyO1xyXG5cclxuICB3aWR0aDogOTAlO1xyXG4gIGhlaWdodDogOTAlO1xyXG4gIHBhZGRpbmc6IDA7XHJcbiAgbWFyZ2luOiAyMHB4IDIwcHggMjBweCAyMHB4O1xyXG59XHJcblxyXG5jYW52YXMsIHN2ZyB7XHJcbiAgb3ZlcmZsb3c6IGhpZGRlbjtcclxuICBib3JkZXI6IDFweCBzb2xpZCBibGFjaztcclxuICAvLyBib3JkZXItcmFkaXVzOiAyMHB4O1xyXG4gIHBvc2l0aW9uOiBhYnNvbHV0ZTtcclxuICB0b3A6IDIwcHg7XHJcbiAgbGVmdDogMjBweDtcclxufVxyXG5cclxuc3ZnIHtcclxuICBkaXNwbGF5OiBibG9jaztcclxuICBmaWxsOiBibGFjaztcclxuICBmaWxsLXJ1bGU6IGV2ZW5vZGQ7XHJcbn1cclxuXHJcbi8vIHBvbHlnb24geyBcclxuLy8gICBmaWxsOiBibGFjaztcclxuLy8gfSIsIi5jZW50ZXJib3gge1xuICBkaXNwbGF5OiAtd2Via2l0LWJveDtcbiAgLXdlYmtpdC1ib3gtb3JpZW50OiBob3Jpem9udGFsO1xuICAtd2Via2l0LWJveC1wYWNrOiBjZW50ZXI7XG4gIC13ZWJraXQtYm94LWFsaWduOiBjZW50ZXI7XG4gIGRpc3BsYXk6IC1tb3otYm94O1xuICAtbW96LWJveC1vcmllbnQ6IGhvcml6b250YWw7XG4gIC1tb3otYm94LXBhY2s6IGNlbnRlcjtcbiAgLW1vei1ib3gtYWxpZ246IGNlbnRlcjtcbiAgd2lkdGg6IDkwJTtcbiAgaGVpZ2h0OiA5MCU7XG4gIHBhZGRpbmc6IDA7XG4gIG1hcmdpbjogMjBweCAyMHB4IDIwcHggMjBweDtcbn1cblxuY2FudmFzLCBzdmcge1xuICBvdmVyZmxvdzogaGlkZGVuO1xuICBib3JkZXI6IDFweCBzb2xpZCBibGFjaztcbiAgcG9zaXRpb246IGFic29sdXRlO1xuICB0b3A6IDIwcHg7XG4gIGxlZnQ6IDIwcHg7XG59XG5cbnN2ZyB7XG4gIGRpc3BsYXk6IGJsb2NrO1xuICBmaWxsOiBibGFjaztcbiAgZmlsbC1ydWxlOiBldmVub2RkO1xufSJdfQ== */"] });
 /*@__PURE__*/ (function () { _angular_core__WEBPACK_IMPORTED_MODULE_0__["ɵsetClassMetadata"](MapToolComponent, [{
         type: _angular_core__WEBPACK_IMPORTED_MODULE_0__["Component"],
         args: [{
@@ -394,6 +394,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var src_enum_world_biome__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! src/_enum/world.biome */ "./src/_enum/world.biome.ts");
 /* harmony import */ var src_utils_helper__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! src/_utils/helper */ "./src/_utils/helper.ts");
 /* harmony import */ var src_model_vector__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! src/_model/vector */ "./src/_model/vector.ts");
+/* harmony import */ var src_model_layer__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! src/_model/layer */ "./src/_model/layer.ts");
+
 
 
 
@@ -506,6 +508,56 @@ class WorldGenerator {
             resolve(ret);
         });
     }
+    getVectors(width, height) {
+        return new Promise(resolve => {
+            console.log(`[getVectors] start ${width}x${height}`, new Date());
+            const allVectors = [];
+            let count = 0;
+            for (var x = 0; x < width - 1; x++) {
+                for (var y = 0; y < height - 1; y++) {
+                    const no = new src_model_point__WEBPACK_IMPORTED_MODULE_1__["Point"](x, y, 0);
+                    if (this.GetInformation(src_utils_conversor__WEBPACK_IMPORTED_MODULE_4__["Conversor"].FromMercator(no, width, height), 1).topology < 0.5)
+                        continue;
+                    const ne = new src_model_point__WEBPACK_IMPORTED_MODULE_1__["Point"]((1 + x), y, 0);
+                    if (this.GetInformation(src_utils_conversor__WEBPACK_IMPORTED_MODULE_4__["Conversor"].FromMercator(ne, width, height), 1).topology < 0.5)
+                        continue;
+                    const so = new src_model_point__WEBPACK_IMPORTED_MODULE_1__["Point"](x, (1 + y), 0);
+                    if (this.GetInformation(src_utils_conversor__WEBPACK_IMPORTED_MODULE_4__["Conversor"].FromMercator(so, width, height), 1).topology < 0.5)
+                        continue;
+                    const se = new src_model_point__WEBPACK_IMPORTED_MODULE_1__["Point"]((1 + x), (1 + y), 0);
+                    if (this.GetInformation(src_utils_conversor__WEBPACK_IMPORTED_MODULE_4__["Conversor"].FromMercator(se, width, height), 1).topology < 0.5)
+                        continue;
+                    src_model_vector__WEBPACK_IMPORTED_MODULE_7__["Vector"].AddInIfInvertNotExistsAndRemoveItFrom(allVectors, new src_model_vector__WEBPACK_IMPORTED_MODULE_7__["Vector"](no, ne));
+                    src_model_vector__WEBPACK_IMPORTED_MODULE_7__["Vector"].AddInIfInvertNotExistsAndRemoveItFrom(allVectors, new src_model_vector__WEBPACK_IMPORTED_MODULE_7__["Vector"](ne, se));
+                    src_model_vector__WEBPACK_IMPORTED_MODULE_7__["Vector"].AddInIfInvertNotExistsAndRemoveItFrom(allVectors, new src_model_vector__WEBPACK_IMPORTED_MODULE_7__["Vector"](se, so));
+                    src_model_vector__WEBPACK_IMPORTED_MODULE_7__["Vector"].AddInIfInvertNotExistsAndRemoveItFrom(allVectors, new src_model_vector__WEBPACK_IMPORTED_MODULE_7__["Vector"](so, no));
+                    count++;
+                }
+            }
+            console.log('condensedVectors', allVectors.length, new Date());
+            let copyCondensedVectors = [...allVectors];
+            const layers = [];
+            while (copyCondensedVectors.length > 0) {
+                const vectors = [];
+                const startVector = copyCondensedVectors.pop();
+                vectors.push(startVector.copy);
+                let runner = startVector.copy;
+                while (!runner.end.equals(startVector.start)) {
+                    const vectorIdx = copyCondensedVectors.findIndex((v) => runner.end.equals(v.start));
+                    runner = copyCondensedVectors.splice(vectorIdx, 1)[0];
+                    vectors.push(runner.copy);
+                }
+                layers.push(new src_model_layer__WEBPACK_IMPORTED_MODULE_8__["Layer"](vectors).shrunk());
+            }
+            console.log('layers', layers.length, new Date());
+            // const shrunkenLayers: Layer[] = [];
+            // layers.forEach((layer) => {
+            //   shrunkenLayers.push(layer.shrunk());
+            // });
+            // console.log('shrunkenLayeredPaths', shrunkenLayers.length, new Date());
+            resolve(layers);
+        });
+    }
     getSvg(width, height) {
         return new Promise(resolve => {
             console.log('start', width, height, new Date());
@@ -559,7 +611,7 @@ class WorldGenerator {
                 }
                 layeredPaths.push(layer);
             }
-            console.log('layeredPaths', layeredPaths.length, new Date(), layeredPaths);
+            console.log('layeredPaths', layeredPaths.length, new Date());
             const shrunkenLayeredPaths = [];
             layeredPaths.forEach((layer) => {
                 const shrunkenLayer = [];
@@ -576,7 +628,7 @@ class WorldGenerator {
                 shrunkenLayer.push(runner.copy);
                 shrunkenLayeredPaths.push(shrunkenLayer);
             });
-            console.log('shrunkenLayeredPaths', shrunkenLayeredPaths.length, new Date(), shrunkenLayeredPaths);
+            console.log('shrunkenLayeredPaths', shrunkenLayeredPaths.length, new Date());
             resolve(shrunkenLayeredPaths);
         });
     }
@@ -680,6 +732,44 @@ class Coordinate {
 
 /***/ }),
 
+/***/ "./src/_model/layer.ts":
+/*!*****************************!*\
+  !*** ./src/_model/layer.ts ***!
+  \*****************************/
+/*! exports provided: Layer */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Layer", function() { return Layer; });
+/* harmony import */ var _vector__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./vector */ "./src/_model/vector.ts");
+
+class Layer {
+    constructor(limit = [], innerLayers = []) {
+        this.limit = limit;
+        this.innerLayers = innerLayers;
+    }
+    shrunk() {
+        const layer = [...this.limit];
+        const array = [];
+        let runner = layer[0].copy;
+        for (let i = 1; i < layer.length; i++) {
+            if (runner.isCollinear(layer[i].end)) {
+                runner = new _vector__WEBPACK_IMPORTED_MODULE_0__["Vector"](runner.start, layer[i].end);
+            }
+            else {
+                array.push(runner.copy);
+                runner = layer[i].copy;
+            }
+        }
+        array.push(runner.copy);
+        return new Layer(array, this.innerLayers);
+    }
+}
+
+
+/***/ }),
+
 /***/ "./src/_model/point.ts":
 /*!*****************************!*\
   !*** ./src/_model/point.ts ***!
@@ -698,6 +788,17 @@ class Point {
     }
     equals(point) {
         return (this.X === point.X && this.Y === point.Y && this.Z === point.Z);
+    }
+    inside(vectors) {
+        let inside = false;
+        for (let i = 0, j = vectors.length - 1; i < vectors.length; j = i++) {
+            const xi = vectors[i].start.X, yi = vectors[i].start.Y;
+            const xj = vectors[j].end.X, yj = vectors[j].end.Y;
+            const intersect = ((yi > this.Y) != (yj > this.Y)) && (this.X < (xj - xi) * (this.Y - yi) / (yj - yi) + xi);
+            if (intersect)
+                inside = !inside;
+        }
+        return inside;
     }
 }
 
@@ -744,6 +845,16 @@ class Vector {
     }
     equals(vector) {
         return (this.start.equals(vector.start) && this.end.equals(vector.end));
+    }
+    static AddInIfInvertNotExistsAndRemoveItFrom(vectors, vector) {
+        const vectorIdx = vectors.findIndex((v) => vector.inverted.equals(v));
+        if (vectorIdx > -1) {
+            vectors.splice(vectorIdx, 1);
+        }
+        else {
+            vectors.push(vector);
+        }
+        return vectors;
     }
 }
 
@@ -973,6 +1084,18 @@ class Helper {
     }
     static IdxVectorToMatrix(idx, width, stepX = 1, stepY = 1) {
         return new src_model_point__WEBPACK_IMPORTED_MODULE_0__["Point"]((idx % width), (idx / width), 0);
+    }
+    static Matrix(width = 200, height = 100, action = () => null, initx = 0, inity = 0, increment = 1) {
+        const ini = new Date();
+        let count = 0;
+        for (let y = inity; y < height; y += increment) {
+            for (let x = initx; x < width; y += increment) {
+                if (action !== null)
+                    action(x, y);
+            }
+        }
+        const end = new Date();
+        console.log(`duration [Matrix] ${initx > 0 || inity > 0 ? `${initx}:${inity}` : ''} ${width}:${height} ${increment > 1 ? increment : ''} ${Helper.TruncDecimals(end.getTime() / 1000 - ini.getTime() / 1000, 3)}s with count: ${count}`);
     }
 }
 

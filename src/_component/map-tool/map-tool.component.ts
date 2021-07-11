@@ -105,17 +105,17 @@ export class MapToolComponent implements AfterViewInit {
       }
       this.context.putImageData(image, 0, 0);
 
-      this.world.getSvg(width, height).then((layers) => {
+      this.world.getVectors(width, height).then((layers) => {
         layers.forEach(layer => {
           const element = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-          let path = `M ${layer[0].start.X} ${layer[0].start.Y} `;
-          layer.forEach(vector => {
+          let path = `M ${layer.limit[0].start.X} ${layer.limit[0].start.Y} `;
+          layer.limit.forEach(vector => {
             path += `L ${vector.end.X} ${vector.end.Y} `;
           });
           path += 'Z';
           element.setAttribute('d', path);
-          const clockwise = layer[0].isClockwise(layer[1]);
           element.style.stroke = '#000';
+          element.style.fillOpacity = '.5';
           element.style.strokeWidth = '1px';
 
           this.svg.nativeElement.appendChild(element);

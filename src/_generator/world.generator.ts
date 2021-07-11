@@ -6,6 +6,7 @@ import { Conversor } from 'src/_utils/conversor';
 import { WorldBiome } from 'src/_enum/world.biome';
 import { Helper } from 'src/_utils/helper';
 import { Vector } from 'src/_model/vector';
+import { Layer } from 'src/_model/layer';
 
 export class WorldGenerator {
   private noise = { raw: [], topology: [], trees: [], ores: [] };
@@ -116,6 +117,55 @@ export class WorldGenerator {
     });
   }
 
+  public getVectors(width: number, height: number): Promise<Layer[]> {
+    return new Promise<Layer[]>(resolve => {
+      console.log(`[getVectors] start ${width}x${height}`, new Date());
+      const allVectors: Vector[] = [];
+      let count = 0;
+      for (var x = 0; x < width - 1; x++) {
+        for (var y = 0; y < height - 1; y++) {
+          const no = new Point(x, y, 0);
+          if (this.GetInformation(Conversor.FromMercator(no, width, height), 1).topology < 0.5) continue;
+          const ne = new Point((1 + x), y, 0);
+          if (this.GetInformation(Conversor.FromMercator(ne, width, height), 1).topology < 0.5) continue;
+          const so = new Point(x, (1 + y), 0);
+          if (this.GetInformation(Conversor.FromMercator(so, width, height), 1).topology < 0.5) continue;
+          const se = new Point((1 + x), (1 + y), 0);
+          if (this.GetInformation(Conversor.FromMercator(se, width, height), 1).topology < 0.5) continue;
+
+          Vector.AddInIfInvertNotExistsAndRemoveItFrom(allVectors, new Vector(no, ne));
+          Vector.AddInIfInvertNotExistsAndRemoveItFrom(allVectors, new Vector(ne, se));
+          Vector.AddInIfInvertNotExistsAndRemoveItFrom(allVectors, new Vector(se, so));
+          Vector.AddInIfInvertNotExistsAndRemoveItFrom(allVectors, new Vector(so, no));
+
+          count++;
+        }
+      }
+      console.log('condensedVectors', allVectors.length, new Date());
+      let copyCondensedVectors = [...allVectors];
+      const layers: Layer[] = [];
+      while (copyCondensedVectors.length > 0) {
+        const vectors: Vector[] = [];
+        const startVector = copyCondensedVectors.pop();
+        vectors.push(startVector.copy);
+        let runner = startVector.copy;
+        while (!runner.end.equals(startVector.start)) {
+          const vectorIdx = copyCondensedVectors.findIndex((v) => runner.end.equals(v.start));
+          runner = copyCondensedVectors.splice(vectorIdx, 1)[0];
+          vectors.push(runner.copy);
+        }
+        layers.push(new Layer(vectors).shrunk());
+      }
+      console.log('layers', layers.length, new Date());
+      // const shrunkenLayers: Layer[] = [];
+      // layers.forEach((layer) => {
+      //   shrunkenLayers.push(layer.shrunk());
+      // });
+      // console.log('shrunkenLayeredPaths', shrunkenLayers.length, new Date());
+      resolve(layers);
+    });
+  }
+
   public getSvg(width: number, height: number): Promise<Vector[][]> {
     return new Promise<Vector[][]>(resolve => {
       console.log('start', width, height, new Date());
@@ -166,7 +216,7 @@ export class WorldGenerator {
         }
         layeredPaths.push(layer);
       }
-      console.log('layeredPaths', layeredPaths.length, new Date(), layeredPaths);
+      console.log('layeredPaths', layeredPaths.length, new Date());
       const shrunkenLayeredPaths: Vector[][] = [];
       layeredPaths.forEach((layer) => {
         const shrunkenLayer: Vector[] = [];
@@ -182,7 +232,7 @@ export class WorldGenerator {
         shrunkenLayer.push(runner.copy);
         shrunkenLayeredPaths.push(shrunkenLayer);
       });
-      console.log('shrunkenLayeredPaths', shrunkenLayeredPaths.length, new Date(), shrunkenLayeredPaths);
+      console.log('shrunkenLayeredPaths', shrunkenLayeredPaths.length, new Date());
       resolve(shrunkenLayeredPaths);
     });
   }

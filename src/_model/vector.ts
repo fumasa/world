@@ -34,4 +34,14 @@ export class Vector {
   public equals(vector: Vector): boolean {
     return (this.start.equals(vector.start) && this.end.equals(vector.end));
   }
+
+  public static AddInIfInvertNotExistsAndRemoveItFrom(vectors: Vector[], vector: Vector): Vector[] {
+    const vectorIdx = vectors.findIndex((v) => vector.inverted.equals(v));
+    if (vectorIdx > -1) {
+      vectors.splice(vectorIdx, 1);
+    } else {
+      vectors.push(vector);
+    }
+    return vectors;
+  }
 }
