@@ -734,10 +734,17 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
           return new Promise(function (resolve) {
             console.log("[getVectors] start ".concat(width, "x").concat(height), new Date());
             var allVectors = [];
+            var progress = 0;
+            var total = width * height;
+            var step = total / 10;
             var count = 0;
 
             for (var x = 0; x < width - 1; x++) {
               for (var y = 0; y < height - 1; y++) {
+                if (progress++ % step === 0) {
+                  console.log("".concat(Math.round(progress * 100 / total), "%"));
+                }
+
                 var no = new src_model_point__WEBPACK_IMPORTED_MODULE_1__["Point"](x, y, 0);
                 if (_this5.GetInformation(src_utils_conversor__WEBPACK_IMPORTED_MODULE_4__["Conversor"].FromMercator(no, width, height), 1).topology < 0.5) continue;
                 var ne = new src_model_point__WEBPACK_IMPORTED_MODULE_1__["Point"](1 + x, y, 0);
@@ -754,9 +761,9 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
               }
             }
 
-            console.log('condensedVectors', allVectors.length, new Date());
+            console.log('allVectors', allVectors.length, new Date());
             var copyCondensedVectors = [].concat(allVectors);
-            var layers = [];
+            var closedCircuits = [];
 
             var _loop = function _loop() {
               var vectors = [];
@@ -772,16 +779,16 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
                 vectors.push(runner.copy);
               }
 
-              layers.push(new src_model_layer__WEBPACK_IMPORTED_MODULE_8__["Layer"](vectors).shrunk());
+              closedCircuits.push(new src_model_layer__WEBPACK_IMPORTED_MODULE_8__["Layer"](vectors).shrunk());
             };
 
             while (copyCondensedVectors.length > 0) {
               _loop();
             }
 
-            console.log('layers', layers.length, new Date());
+            console.log('closedCircuits', closedCircuits.length, new Date());
             var layer = new src_model_layer__WEBPACK_IMPORTED_MODULE_8__["Layer"]();
-            layer.innerLayers = layers;
+            layer.innerLayers = closedCircuits;
             layer.Process();
             console.log('layer', layer, new Date());
             resolve(layer);

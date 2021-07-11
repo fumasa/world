@@ -121,9 +121,15 @@ export class WorldGenerator {
     return new Promise<Layer>(resolve => {
       console.log(`[getVectors] start ${width}x${height}`, new Date());
       const allVectors: Vector[] = [];
+      let progress = 0;
+      const total = width * height;
+      const step = total / 10;
       let count = 0;
       for (var x = 0; x < width - 1; x++) {
         for (var y = 0; y < height - 1; y++) {
+          if (progress++ % step === 0) {
+            console.log(`${Math.round((progress * 100) / total)}%`);
+          }
           const no = new Point(x, y, 0);
           if (this.GetInformation(Conversor.FromMercator(no, width, height), 1).topology < 0.5) continue;
           const ne = new Point((1 + x), y, 0);
@@ -141,9 +147,9 @@ export class WorldGenerator {
           count++;
         }
       }
-      console.log('condensedVectors', allVectors.length, new Date());
+      console.log('allVectors', allVectors.length, new Date());
       let copyCondensedVectors = [...allVectors];
-      const layers: Layer[] = [];
+      const closedCircuits: Layer[] = [];
       while (copyCondensedVectors.length > 0) {
         const vectors: Vector[] = [];
         const startVector = copyCondensedVectors.pop();
@@ -154,11 +160,11 @@ export class WorldGenerator {
           runner = copyCondensedVectors.splice(vectorIdx, 1)[0];
           vectors.push(runner.copy);
         }
-        layers.push(new Layer(vectors).shrunk());
+        closedCircuits.push(new Layer(vectors).shrunk());
       }
-      console.log('layers', layers.length, new Date());
+      console.log('closedCircuits', closedCircuits.length, new Date());
       const layer = new Layer();
-      layer.innerLayers = layers;
+      layer.innerLayers = closedCircuits;
       layer.Process();
       console.log('layer', layer, new Date());
       resolve(layer);

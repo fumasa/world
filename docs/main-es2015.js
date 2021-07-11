@@ -486,9 +486,15 @@ class WorldGenerator {
         return new Promise(resolve => {
             console.log(`[getVectors] start ${width}x${height}`, new Date());
             const allVectors = [];
+            let progress = 0;
+            const total = width * height;
+            const step = total / 10;
             let count = 0;
             for (var x = 0; x < width - 1; x++) {
                 for (var y = 0; y < height - 1; y++) {
+                    if (progress++ % step === 0) {
+                        console.log(`${Math.round((progress * 100) / total)}%`);
+                    }
                     const no = new src_model_point__WEBPACK_IMPORTED_MODULE_1__["Point"](x, y, 0);
                     if (this.GetInformation(src_utils_conversor__WEBPACK_IMPORTED_MODULE_4__["Conversor"].FromMercator(no, width, height), 1).topology < 0.5)
                         continue;
@@ -508,9 +514,9 @@ class WorldGenerator {
                     count++;
                 }
             }
-            console.log('condensedVectors', allVectors.length, new Date());
+            console.log('allVectors', allVectors.length, new Date());
             let copyCondensedVectors = [...allVectors];
-            const layers = [];
+            const closedCircuits = [];
             while (copyCondensedVectors.length > 0) {
                 const vectors = [];
                 const startVector = copyCondensedVectors.pop();
@@ -521,11 +527,11 @@ class WorldGenerator {
                     runner = copyCondensedVectors.splice(vectorIdx, 1)[0];
                     vectors.push(runner.copy);
                 }
-                layers.push(new src_model_layer__WEBPACK_IMPORTED_MODULE_8__["Layer"](vectors).shrunk());
+                closedCircuits.push(new src_model_layer__WEBPACK_IMPORTED_MODULE_8__["Layer"](vectors).shrunk());
             }
-            console.log('layers', layers.length, new Date());
+            console.log('closedCircuits', closedCircuits.length, new Date());
             const layer = new src_model_layer__WEBPACK_IMPORTED_MODULE_8__["Layer"]();
-            layer.innerLayers = layers;
+            layer.innerLayers = closedCircuits;
             layer.Process();
             console.log('layer', layer, new Date());
             resolve(layer);
