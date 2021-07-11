@@ -7,6 +7,7 @@ import { WorldBiome } from 'src/_enum/world.biome';
 import { Helper } from 'src/_utils/helper';
 import { Vector } from 'src/_model/vector';
 import { Layer } from 'src/_model/layer';
+import { Progress } from 'src/_utils/progress';
 
 export class WorldGenerator {
   private noise = { raw: [], topology: [], trees: [], ores: [] };
@@ -118,18 +119,13 @@ export class WorldGenerator {
   }
 
   public getVectors(width: number, height: number): Promise<Layer> {
+    const progress = new Progress(width*height);
     return new Promise<Layer>(resolve => {
-      console.log(`[getVectors] start ${width}x${height}`, new Date());
+      progress.start();
       const allVectors: Vector[] = [];
-      let progress = 0;
-      const total = width * height;
-      const step = total / 10;
-      let count = 0;
       for (var x = 0; x < width - 1; x++) {
         for (var y = 0; y < height - 1; y++) {
-          if (progress++ % step === 0) {
-            console.log(`${Math.round((progress * 100) / total)}%`);
-          }
+          progress.check();
           const no = new Point(x, y, 0);
           if (this.GetInformation(Conversor.FromMercator(no, width, height), 1).topology < 0.5) continue;
           const ne = new Point((1 + x), y, 0);
@@ -143,30 +139,10 @@ export class WorldGenerator {
           Vector.AddInIfInvertNotExistsAndRemoveItFrom(allVectors, new Vector(ne, se));
           Vector.AddInIfInvertNotExistsAndRemoveItFrom(allVectors, new Vector(se, so));
           Vector.AddInIfInvertNotExistsAndRemoveItFrom(allVectors, new Vector(so, no));
-
-          count++;
         }
       }
-      console.log('allVectors', allVectors.length, new Date());
-      let copyCondensedVectors = [...allVectors];
-      const closedCircuits: Layer[] = [];
-      while (copyCondensedVectors.length > 0) {
-        const vectors: Vector[] = [];
-        const startVector = copyCondensedVectors.pop();
-        vectors.push(startVector.copy);
-        let runner = startVector.copy;
-        while (!runner.end.equals(startVector.start)) {
-          const vectorIdx = copyCondensedVectors.findIndex((v) => runner.end.equals(v.start));
-          runner = copyCondensedVectors.splice(vectorIdx, 1)[0];
-          vectors.push(runner.copy);
-        }
-        closedCircuits.push(new Layer(vectors).shrunk());
-      }
-      console.log('closedCircuits', closedCircuits.length, new Date());
-      const layer = new Layer();
-      layer.innerLayers = closedCircuits;
-      layer.Process();
-      console.log('layer', layer, new Date());
+      const layer = Layer.Transform(allVectors);
+      progress.stop();
       resolve(layer);
     });
   }

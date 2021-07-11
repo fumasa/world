@@ -55,6 +55,28 @@ export class Layer {
     return path;
   }
 
+  public static Transform(allVectors: Vector[]): Layer {
+    const copyVectors = [ ...allVectors ];
+    const closedCircuits: Layer[] = [];
+      while (copyVectors.length > 0) {
+        const vectors: Vector[] = [];
+        const startVector = copyVectors.pop();
+        vectors.push(startVector.copy);
+        let runner = startVector.copy;
+        while (!runner.end.equals(startVector.start)) {
+          const vectorIdx = copyVectors.findIndex((v) => runner.end.equals(v.start));
+          runner = copyVectors.splice(vectorIdx, 1)[0];
+          vectors.push(runner.copy);
+        }
+        closedCircuits.push(new Layer(vectors).shrunk());
+      }
+      //console.log('closedCircuits', closedCircuits.length, new Date());
+      const layer = new Layer();
+      layer.innerLayers = closedCircuits;
+      layer.Process();
+      return layer;
+  }
+
   public Process() {
     this.innerLayers.sort(Layer.DefaultSort);
     const copyInnerLayers = [...this.innerLayers];

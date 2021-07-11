@@ -369,6 +369,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var src_utils_helper__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! src/_utils/helper */ "./src/_utils/helper.ts");
 /* harmony import */ var src_model_vector__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! src/_model/vector */ "./src/_model/vector.ts");
 /* harmony import */ var src_model_layer__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! src/_model/layer */ "./src/_model/layer.ts");
+/* harmony import */ var src_utils_progress__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! src/_utils/progress */ "./src/_utils/progress.ts");
+
 
 
 
@@ -483,18 +485,13 @@ class WorldGenerator {
         });
     }
     getVectors(width, height) {
+        const progress = new src_utils_progress__WEBPACK_IMPORTED_MODULE_9__["Progress"](width * height);
         return new Promise(resolve => {
-            console.log(`[getVectors] start ${width}x${height}`, new Date());
+            progress.start();
             const allVectors = [];
-            let progress = 0;
-            const total = width * height;
-            const step = total / 10;
-            let count = 0;
             for (var x = 0; x < width - 1; x++) {
                 for (var y = 0; y < height - 1; y++) {
-                    if (progress++ % step === 0) {
-                        console.log(`${Math.round((progress * 100) / total)}%`);
-                    }
+                    progress.check();
                     const no = new src_model_point__WEBPACK_IMPORTED_MODULE_1__["Point"](x, y, 0);
                     if (this.GetInformation(src_utils_conversor__WEBPACK_IMPORTED_MODULE_4__["Conversor"].FromMercator(no, width, height), 1).topology < 0.5)
                         continue;
@@ -511,29 +508,10 @@ class WorldGenerator {
                     src_model_vector__WEBPACK_IMPORTED_MODULE_7__["Vector"].AddInIfInvertNotExistsAndRemoveItFrom(allVectors, new src_model_vector__WEBPACK_IMPORTED_MODULE_7__["Vector"](ne, se));
                     src_model_vector__WEBPACK_IMPORTED_MODULE_7__["Vector"].AddInIfInvertNotExistsAndRemoveItFrom(allVectors, new src_model_vector__WEBPACK_IMPORTED_MODULE_7__["Vector"](se, so));
                     src_model_vector__WEBPACK_IMPORTED_MODULE_7__["Vector"].AddInIfInvertNotExistsAndRemoveItFrom(allVectors, new src_model_vector__WEBPACK_IMPORTED_MODULE_7__["Vector"](so, no));
-                    count++;
                 }
             }
-            console.log('allVectors', allVectors.length, new Date());
-            let copyCondensedVectors = [...allVectors];
-            const closedCircuits = [];
-            while (copyCondensedVectors.length > 0) {
-                const vectors = [];
-                const startVector = copyCondensedVectors.pop();
-                vectors.push(startVector.copy);
-                let runner = startVector.copy;
-                while (!runner.end.equals(startVector.start)) {
-                    const vectorIdx = copyCondensedVectors.findIndex((v) => runner.end.equals(v.start));
-                    runner = copyCondensedVectors.splice(vectorIdx, 1)[0];
-                    vectors.push(runner.copy);
-                }
-                closedCircuits.push(new src_model_layer__WEBPACK_IMPORTED_MODULE_8__["Layer"](vectors).shrunk());
-            }
-            console.log('closedCircuits', closedCircuits.length, new Date());
-            const layer = new src_model_layer__WEBPACK_IMPORTED_MODULE_8__["Layer"]();
-            layer.innerLayers = closedCircuits;
-            layer.Process();
-            console.log('layer', layer, new Date());
+            const layer = src_model_layer__WEBPACK_IMPORTED_MODULE_8__["Layer"].Transform(allVectors);
+            progress.stop();
             resolve(layer);
         });
     }
@@ -775,6 +753,27 @@ class Layer {
             path += layer.AsSvgPath();
         });
         return path;
+    }
+    static Transform(allVectors) {
+        const copyVectors = [...allVectors];
+        const closedCircuits = [];
+        while (copyVectors.length > 0) {
+            const vectors = [];
+            const startVector = copyVectors.pop();
+            vectors.push(startVector.copy);
+            let runner = startVector.copy;
+            while (!runner.end.equals(startVector.start)) {
+                const vectorIdx = copyVectors.findIndex((v) => runner.end.equals(v.start));
+                runner = copyVectors.splice(vectorIdx, 1)[0];
+                vectors.push(runner.copy);
+            }
+            closedCircuits.push(new Layer(vectors).shrunk());
+        }
+        //console.log('closedCircuits', closedCircuits.length, new Date());
+        const layer = new Layer();
+        layer.innerLayers = closedCircuits;
+        layer.Process();
+        return layer;
     }
     Process() {
         this.innerLayers.sort(Layer.DefaultSort);
@@ -1186,6 +1185,44 @@ Perlin.DefaultP = [151, 160, 137, 91, 90, 15,
     251, 34, 242, 193, 238, 210, 144, 12, 191, 179, 162, 241, 81, 51, 145, 235, 249, 14, 239, 107,
     49, 192, 214, 31, 181, 199, 106, 157, 184, 84, 204, 176, 115, 121, 50, 45, 127, 4, 150, 254,
     138, 236, 205, 93, 222, 114, 67, 29, 24, 72, 243, 141, 128, 195, 78, 66, 215, 61, 156, 180];
+
+
+/***/ }),
+
+/***/ "./src/_utils/progress.ts":
+/*!********************************!*\
+  !*** ./src/_utils/progress.ts ***!
+  \********************************/
+/*! exports provided: Progress */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Progress", function() { return Progress; });
+/* harmony import */ var _helper__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./helper */ "./src/_utils/helper.ts");
+
+class Progress {
+    constructor(total) {
+        this.step = 0;
+        this.total = total;
+        this.step = this.total / 10;
+        this.progress = 0;
+    }
+    start() {
+        this.ini = new Date();
+        console.log(`start ${this.total}`, this.ini);
+    }
+    stop() {
+        const end = new Date();
+        console.log(`duration ${_helper__WEBPACK_IMPORTED_MODULE_0__["Helper"].TruncDecimals(end.getTime() / 1000 - this.ini.getTime() / 1000, 3)}s ${end}`);
+    }
+    check() {
+        this.progress++;
+        if (this.progress % this.step === 0) {
+            console.log(`${Math.round((this.progress * 100) / this.total)}%`);
+        }
+    }
+}
 
 
 /***/ }),

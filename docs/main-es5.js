@@ -573,6 +573,12 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     var src_model_layer__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(
     /*! src/_model/layer */
     "./src/_model/layer.ts");
+    /* harmony import */
+
+
+    var src_utils_progress__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(
+    /*! src/_utils/progress */
+    "./src/_utils/progress.ts");
 
     var WorldGenerator = /*#__PURE__*/function () {
       function WorldGenerator() {
@@ -731,20 +737,14 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
         value: function getVectors(width, height) {
           var _this5 = this;
 
+          var progress = new src_utils_progress__WEBPACK_IMPORTED_MODULE_9__["Progress"](width * height);
           return new Promise(function (resolve) {
-            console.log("[getVectors] start ".concat(width, "x").concat(height), new Date());
+            progress.start();
             var allVectors = [];
-            var progress = 0;
-            var total = width * height;
-            var step = total / 10;
-            var count = 0;
 
             for (var x = 0; x < width - 1; x++) {
               for (var y = 0; y < height - 1; y++) {
-                if (progress++ % step === 0) {
-                  console.log("".concat(Math.round(progress * 100 / total), "%"));
-                }
-
+                progress.check();
                 var no = new src_model_point__WEBPACK_IMPORTED_MODULE_1__["Point"](x, y, 0);
                 if (_this5.GetInformation(src_utils_conversor__WEBPACK_IMPORTED_MODULE_4__["Conversor"].FromMercator(no, width, height), 1).topology < 0.5) continue;
                 var ne = new src_model_point__WEBPACK_IMPORTED_MODULE_1__["Point"](1 + x, y, 0);
@@ -757,40 +757,11 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
                 src_model_vector__WEBPACK_IMPORTED_MODULE_7__["Vector"].AddInIfInvertNotExistsAndRemoveItFrom(allVectors, new src_model_vector__WEBPACK_IMPORTED_MODULE_7__["Vector"](ne, se));
                 src_model_vector__WEBPACK_IMPORTED_MODULE_7__["Vector"].AddInIfInvertNotExistsAndRemoveItFrom(allVectors, new src_model_vector__WEBPACK_IMPORTED_MODULE_7__["Vector"](se, so));
                 src_model_vector__WEBPACK_IMPORTED_MODULE_7__["Vector"].AddInIfInvertNotExistsAndRemoveItFrom(allVectors, new src_model_vector__WEBPACK_IMPORTED_MODULE_7__["Vector"](so, no));
-                count++;
               }
             }
 
-            console.log('allVectors', allVectors.length, new Date());
-            var copyCondensedVectors = [].concat(allVectors);
-            var closedCircuits = [];
-
-            var _loop = function _loop() {
-              var vectors = [];
-              var startVector = copyCondensedVectors.pop();
-              vectors.push(startVector.copy);
-              var runner = startVector.copy;
-
-              while (!runner.end.equals(startVector.start)) {
-                var vectorIdx = copyCondensedVectors.findIndex(function (v) {
-                  return runner.end.equals(v.start);
-                });
-                runner = copyCondensedVectors.splice(vectorIdx, 1)[0];
-                vectors.push(runner.copy);
-              }
-
-              closedCircuits.push(new src_model_layer__WEBPACK_IMPORTED_MODULE_8__["Layer"](vectors).shrunk());
-            };
-
-            while (copyCondensedVectors.length > 0) {
-              _loop();
-            }
-
-            console.log('closedCircuits', closedCircuits.length, new Date());
-            var layer = new src_model_layer__WEBPACK_IMPORTED_MODULE_8__["Layer"]();
-            layer.innerLayers = closedCircuits;
-            layer.Process();
-            console.log('layer', layer, new Date());
+            var layer = src_model_layer__WEBPACK_IMPORTED_MODULE_8__["Layer"].Transform(allVectors);
+            progress.stop();
             resolve(layer);
           });
         }
@@ -826,7 +797,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
             var copyAllVectors = [].concat(allVectors);
             var condensedVectors = [];
 
-            var _loop2 = function _loop2() {
+            var _loop = function _loop() {
               var vector = copyAllVectors.pop();
 
               if (!vector.inverted.containsIn(copyAllVectors)) {
@@ -839,14 +810,14 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
             };
 
             while (copyAllVectors.length > 0) {
-              _loop2();
+              _loop();
             }
 
             console.log('condensedVectors', condensedVectors.length, new Date());
             var copyCondensedVectors = [].concat(condensedVectors);
             var layeredPaths = [];
 
-            var _loop3 = function _loop3() {
+            var _loop2 = function _loop2() {
               var layer = [];
               var startVector = copyCondensedVectors.pop();
               layer.push(startVector.copy);
@@ -864,7 +835,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
             };
 
             while (copyCondensedVectors.length > 0) {
-              _loop3();
+              _loop2();
             }
 
             console.log('layeredPaths', layeredPaths.length, new Date());
@@ -918,7 +889,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
             points = this.probeNearShorepoints(coordinate, step);
           } while (points === []);
 
-          var _loop4 = function _loop4() {
+          var _loop3 = function _loop3() {
             var newPoints = [];
             points.forEach(function (point) {
               // const point = points[0];
@@ -944,7 +915,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
           };
 
           while (points.length !== 0) {
-            _loop4();
+            _loop3();
           }
 
           console.log('finito', polygon);
@@ -1173,6 +1144,40 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
           if (l1.limit.length > l2.limit.length) return 1;
           if (l1.limit.length < l2.limit.length) return -1;
           return 0;
+        }
+      }, {
+        key: "Transform",
+        value: function Transform(allVectors) {
+          var copyVectors = _toConsumableArray(allVectors);
+
+          var closedCircuits = [];
+
+          var _loop4 = function _loop4() {
+            var vectors = [];
+            var startVector = copyVectors.pop();
+            vectors.push(startVector.copy);
+            var runner = startVector.copy;
+
+            while (!runner.end.equals(startVector.start)) {
+              var vectorIdx = copyVectors.findIndex(function (v) {
+                return runner.end.equals(v.start);
+              });
+              runner = copyVectors.splice(vectorIdx, 1)[0];
+              vectors.push(runner.copy);
+            }
+
+            closedCircuits.push(new Layer(vectors).shrunk());
+          };
+
+          while (copyVectors.length > 0) {
+            _loop4();
+          } //console.log('closedCircuits', closedCircuits.length, new Date());
+
+
+          var layer = new Layer();
+          layer.innerLayers = closedCircuits;
+          layer.Process();
+          return layer;
         }
       }]);
 
@@ -1827,6 +1832,71 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
     Perlin.DefaultP = [151, 160, 137, 91, 90, 15, 131, 13, 201, 95, 96, 53, 194, 233, 7, 225, 140, 36, 103, 30, 69, 142, 8, 99, 37, 240, 21, 10, 23, 190, 6, 148, 247, 120, 234, 75, 0, 26, 197, 62, 94, 252, 219, 203, 117, 35, 11, 32, 57, 177, 33, 88, 237, 149, 56, 87, 174, 20, 125, 136, 171, 168, 68, 175, 74, 165, 71, 134, 139, 48, 27, 166, 77, 146, 158, 231, 83, 111, 229, 122, 60, 211, 133, 230, 220, 105, 92, 41, 55, 46, 245, 40, 244, 102, 143, 54, 65, 25, 63, 161, 1, 216, 80, 73, 209, 76, 132, 187, 208, 89, 18, 169, 200, 196, 135, 130, 116, 188, 159, 86, 164, 100, 109, 198, 173, 186, 3, 64, 52, 217, 226, 250, 124, 123, 5, 202, 38, 147, 118, 126, 255, 82, 85, 212, 207, 206, 59, 227, 47, 16, 58, 17, 182, 189, 28, 42, 223, 183, 170, 213, 119, 248, 152, 2, 44, 154, 163, 70, 221, 153, 101, 155, 167, 43, 172, 9, 129, 22, 39, 253, 19, 98, 108, 110, 79, 113, 224, 232, 178, 185, 112, 104, 218, 246, 97, 228, 251, 34, 242, 193, 238, 210, 144, 12, 191, 179, 162, 241, 81, 51, 145, 235, 249, 14, 239, 107, 49, 192, 214, 31, 181, 199, 106, 157, 184, 84, 204, 176, 115, 121, 50, 45, 127, 4, 150, 254, 138, 236, 205, 93, 222, 114, 67, 29, 24, 72, 243, 141, 128, 195, 78, 66, 215, 61, 156, 180];
     /***/
+  },
+
+  /***/
+  "./src/_utils/progress.ts":
+  /*!********************************!*\
+    !*** ./src/_utils/progress.ts ***!
+    \********************************/
+
+  /*! exports provided: Progress */
+
+  /***/
+  function src_utilsProgressTs(module, __webpack_exports__, __webpack_require__) {
+    "use strict";
+
+    __webpack_require__.r(__webpack_exports__);
+    /* harmony export (binding) */
+
+
+    __webpack_require__.d(__webpack_exports__, "Progress", function () {
+      return Progress;
+    });
+    /* harmony import */
+
+
+    var _helper__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(
+    /*! ./helper */
+    "./src/_utils/helper.ts");
+
+    var Progress = /*#__PURE__*/function () {
+      function Progress(total) {
+        _classCallCheck(this, Progress);
+
+        this.step = 0;
+        this.total = total;
+        this.step = this.total / 10;
+        this.progress = 0;
+      }
+
+      _createClass(Progress, [{
+        key: "start",
+        value: function start() {
+          this.ini = new Date();
+          console.log("start ".concat(this.total), this.ini);
+        }
+      }, {
+        key: "stop",
+        value: function stop() {
+          var end = new Date();
+          console.log("duration ".concat(_helper__WEBPACK_IMPORTED_MODULE_0__["Helper"].TruncDecimals(end.getTime() / 1000 - this.ini.getTime() / 1000, 3), "s ").concat(end));
+        }
+      }, {
+        key: "check",
+        value: function check() {
+          this.progress++;
+
+          if (this.progress % this.step === 0) {
+            console.log("".concat(Math.round(this.progress * 100 / this.total), "%"));
+          }
+        }
+      }]);
+
+      return Progress;
+    }();
+    /***/
+
   },
 
   /***/
