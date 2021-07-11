@@ -1,11 +1,9 @@
 import { Component, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
 import { WorldGenerator } from 'src/_generator/world.generator';
 import { BiomeColor } from 'src/_utils/biome.color';
-import { Point } from 'src/_model/point';
 import * as d3 from 'd3';
 import { WorldInfo } from 'src/_model/world.info';
 import { Conversor } from 'src/_utils/conversor';
-import { Vector } from 'src/_model/vector';
 
 interface Datum {
   id: string;
@@ -22,70 +20,16 @@ export class MapToolComponent implements AfterViewInit {
   @ViewChild('svg', { static: false }) svg: ElementRef;
   public context: CanvasRenderingContext2D;
 
-  public sessionKey = 'points';
-
-  position = new Point(0, 0, 0);
-  zoom = 1;
-
-  step = 20;
-  jump = 1.25;
-
-  stepPoints = 0.2;
-
   constructor() {
   }
 
-  // public get Points(): Promise<WorldInfo[]> {
-  //   return new Promise<WorldInfo[]>((resolve) => {
-  //     if (sessionStorage.getItem(this.sessionKey) === null) {
-  //       this.world.GetAllPoints(this.stepPoints).then((p) => {
-  //         sessionStorage.setItem(this.sessionKey, JSON.stringify(p));
-  //         console.log('new points', p.length);
-  //         resolve(p);
-  //       });
-  //     } else {
-  //       resolve(JSON.parse(sessionStorage.getItem(this.sessionKey)));
-  //     }
-  //   });
-  // }
-
-  // public set Points(points: Promise<WorldInfo[]>) {
-  //   points.then((p) => {
-  //     sessionStorage.setItem(this.sessionKey, JSON.stringify(p));
-  //   });
-  // }
-
   ngAfterViewInit(): void {
-
-    //this.change();
-
-    //this.drawMercator();
-    // this.drawMercatorAlt().then(d => {
-    //   console.log('done', d);
-    // });
-    //this.drawGlobe();
-
     this.drawSvgMercator();
-
-    console.log('done');
-  }
-
-  public toggle = true;
-  public change() {
-    // if (this.toggle) {
-    //   this.drawMercator();
-    // } else {
-    //   this.drawMercatorAlt().then(d => {
-    //     console.log('done', d);
-    //   });
-    // }
-    // this.toggle = !this.toggle;
   }
 
   private drawSvgMercator() {
 
     this.context = (<HTMLCanvasElement>this.canvas.nativeElement).getContext('2d');
-    const projection = d3.geoOrthographic();
     const svg = d3.select(this.svg.nativeElement);
 
     const width = document.body.clientWidth - 40;
@@ -98,327 +42,49 @@ export class MapToolComponent implements AfterViewInit {
 
     const image = this.context.createImageData(width, height);
 
-    this.renderSvgMercator(width, height).then(data => {
+    this.renderMercator(width, height).then(data => {
       this.context.clearRect(0, 0, width, height);
       for (let i = 0; i < data.image.byteLength; i++) {
         image.data[i] = data.image[i];
       }
       this.context.putImageData(image, 0, 0);
 
-      this.world.getVectors(width, height).then((layer) => {
-        const element = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        element.setAttribute('d', layer.AsSvgPath());
-        element.style.stroke = '#000';
-        element.style.fillOpacity = '.5';
-        element.style.strokeWidth = '1px';
+      this.world.getVectors(width, height,
+        (info: WorldInfo) => {
+          return info.topology < 0.5;
+        }).then((layer) => {
+          const element = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          element.setAttribute('d', layer.AsSvgPath());
+          element.style.stroke = '#000';
+          element.style.fillOpacity = '.5';
+          element.style.strokeWidth = '1px';
 
-        this.svg.nativeElement.appendChild(element);
-      });
-    });
-
-  }
-
-  // private drawGlobe() {
-  //   this.context = (<HTMLCanvasElement>this.canvas.nativeElement).getContext('2d');
-  //   const projection = d3.geoOrthographic();
-
-  //   const width = document.body.clientWidth - 40;
-  //   const height = document.body.clientHeight - 40;
-
-  //   this.canvas.nativeElement.width = width;
-  //   this.canvas.nativeElement.height = height;
-
-  //   const mercator = this.renderMercator(this.context.createImageData(width, height));
-
-  //   const globe = this.context.createImageData(width, height);
-  //   this.renderGlobe(globe, mercator.data, projection);
-  //   this.context.clearRect(0, 0, width, height);
-  //   this.context.putImageData(globe, 0, 0);
-
-  //   document.onmousemove = (event) => {
-  //     var p = [event.clientX, event.clientY];
-  //     const λM = d3.scaleLinear().domain([0, width]).range([-180, 180]);
-  //     const φM = d3.scaleLinear().domain([0, height]).range([90, -90]);
-
-  //     projection.rotate([λM(p[0]), φM(p[1])]);
-
-  //     this.renderGlobe(globe, mercator.data, projection);
-
-  //     this.context.clearRect(0, 0, width, height);
-  //     this.context.putImageData(globe, 0, 0);
-  //   };
-  // }
-
-  private drawMercator() {
-    this.context = (<HTMLCanvasElement>this.canvas.nativeElement).getContext('2d');
-    const projection = d3.geoOrthographic();
-
-    const width = document.body.clientWidth - 40;
-    const height = document.body.clientHeight - 40;
-
-    this.canvas.nativeElement.width = width;
-    this.canvas.nativeElement.height = height;
-
-    const mercator = this.renderMercator(this.context.createImageData(width, height));
-
-    this.context.clearRect(0, 0, width, height);
-    this.context.putImageData(mercator, 0, 0);
-  }
-
-  private renderMercator(image: ImageData, onlyShoreline = false) {
-    const data = image.data;
-    const width = image.width;
-    const height = image.height;
-    let all = 0;
-    let tree = 0;
-    let ore = 0;
-    let c = 0;
-
-    for (var x = 0; x < width; x++) {
-      for (var y = 0; y < height; y++) {
-        let info = this.world.GetInformation(Conversor.FromMercator(new Point(x, y, 0), width, height), this.zoom);
-        let color = BiomeColor.Get(info.Biome);
-
-        if (onlyShoreline) {
-          if (info.Shoreline) {
-            color = [0, 0, 0, 255];
-            c++;
-          } else {
-            color = [255, 255, 255, 255];
-          }
-        }
-
-        let cell = (x + y * width) * 4;
-
-        data[cell] = color[0];
-        data[cell + 1] = color[1];
-        data[cell + 2] = color[2];
-        data[cell + 3] = color[3];
-
-        all++;
-      }
-    }
-    console.log(`info all:${all} tree:${tree} ore:${ore} ${width}x${height} ${c}`);
-
-    return image;
-  }
-
-  private renderMercator2(width: number, height: number) {
-    let all = 0;
-
-    const data: Uint8ClampedArray = new Uint8ClampedArray(width * height * 4);
-
-    for (var x = 0; x < width; x++) {
-      for (var y = 0; y < height; y++) {
-        let info = this.world.GetInformation(Conversor.FromMercator(new Point(x, y, 0), width, height), this.zoom);
-        let color = BiomeColor.Get(info.Biome);
-
-        let cell = (x + y * width) * 4;
-
-        data[cell] = color[0];
-        data[cell + 1] = color[1];
-        data[cell + 2] = color[2];
-        data[cell + 3] = color[3];
-
-        all++;
-      }
-    }
-    console.log(`alt info all:${all} ${width}x${height}`);
-
-    return data;
-  }
-
-  // private async drawMercatorAlt() {
-  //   this.context = (<HTMLCanvasElement>this.canvas.nativeElement).getContext('2d');
-  //   const projection = d3.geoOrthographic();
-
-  //   const width = document.body.clientWidth - 40;
-  //   const height = document.body.clientHeight - 40;
-
-  //   this.canvas.nativeElement.width = width;
-  //   this.canvas.nativeElement.height = height;
-
-  //   const mercator = await this.renderMercatorAlt(this.context.createImageData(width, height));
-
-  //   this.context.clearRect(0, 0, width, height);
-  //   this.context.putImageData(mercator, 0, 0);
-  // }
-
-  // private renderMercatorAlt(image: ImageData): Promise<ImageData> {
-  //   return new Promise<ImageData>((resolve) => {
-  //     const data = image.data;
-  //     const width = image.width;
-  //     const height = image.height;
-  //     let all = 0;
-  //     let tree = 0;
-  //     let ore = 0;
-
-  //     const stepX = width * this.stepPoints / 360;
-  //     const stepY = height * this.stepPoints / 180;
-
-  //     const sizeX = stepX * (360 / this.stepPoints);
-  //     const sizeY = stepY * (180 / this.stepPoints);
-
-  //     this.world.GetAllPoints(this.stepPoints).then((points) => {
-  //       console.log('length', points.length, width, height, width*height, `x ${sizeX} ${stepX} ${360 / this.stepPoints}`, `y ${sizeY} ${stepY} ${180 / this.stepPoints}`);
-
-  //       for (var x = 0; x < width; x++) {
-  //         for (var y = 0; y < height; y++) {
-  //           let idx = Helper.IdxMatrixToVector(new Point(x, y, 0), width, stepX, stepY);
-
-  //           let info = points[idx];
-
-  //           // if (x % 100 === 0)
-  //           //   console.log('trouble2', x, y, idx, info);
-
-  //           let color = BiomeColor.Get(info.Biome);
-
-  //           // if (info.Biome === WorldBiome.beach) {
-  //           //   color = [0, 0, 0, 255];
-  //           // } else {
-  //           //   color = [255, 255, 255, 255];
-  //           // }
-
-  //           let cell = (x + y * image.width) * 4;
-
-  //           data[cell] = color[0];
-  //           data[cell + 1] = color[1];
-  //           data[cell + 2] = color[2];
-  //           data[cell + 3] = color[3];
-
-  //           all++;
-  //         }
-  //       }
-
-  //       console.log(`info all:${all} tree:${tree} ore:${ore} ${width}x${height}`);
-  //       resolve(image);
-  //     });
-  //   });
-  // }
-
-  private renderSvgMercator(width: number, height: number, onlyShoreline = false) {
-    return new Promise<{ world: WorldInfo[], image: Uint8ClampedArray }>((resolve) => {
-      let all = 0;
-      let tree = 0;
-      let ore = 0;
-      let c = 0;
-      const array: Uint8ClampedArray = new Uint8ClampedArray(width * height * 4);
-
-      this.world.GetAllMercatorPoints(width, height, (info) => {
-        let color = BiomeColor.Get(info.Biome);
-
-        if (onlyShoreline) {
-          if (info.Shoreline) {
-            color = [0, 0, 0, 255];
-            c++;
-          } else {
-            color = [255, 255, 255, 255];
-          }
-        }
-
-        let mercatorPoint = Conversor.ToMercator(info.coordinate, width, height);
-        let cell = Conversor.ToIdxWidth(mercatorPoint, width) * 4;
-
-        array[cell] = color[0];
-        array[cell + 1] = color[1];
-        array[cell + 2] = color[2];
-        array[cell + 3] = color[3];
-
-        all++;
-
-      }).then((points) => {
-        console.log(`info svg all:${all} tree:${tree} ore:${ore} ${width}x${height} ${c}`);
-        resolve({ world: points, image: array });
-      });
+          this.svg.nativeElement.appendChild(element);
+        });
     });
   }
 
-  // private renderGlobe(image: ImageData, mercatorData: Uint8ClampedArray, projection = d3.geoOrthographic()) {
-  //   const width = image.width;
-  //   const height = image.height;
-  //   const data = image.data;
+  private renderMercator(width: number, height: number) {
+    return new Promise<{ image: Uint8ClampedArray }>((resolve) => {
+      this.world.GetAllMercatorPoints(width, height).then((points) => {
+        let all = 0;
+        const array: Uint8ClampedArray = new Uint8ClampedArray(width * height * 4);
+        points.forEach((info) => {
+          let color = BiomeColor.Get(info.Biome);
 
-  //   for (var y = 0, i = -1; y < height; ++y) {
-  //     for (var x = 0; x < width; ++x) {
-  //       var p = projection.invert([x, y]), λ = p[0], φ = p[1];
-  //       if (λ > 180 || λ < -180 || φ > 90 || φ < -90) {
-  //         i += 4;
-  //         continue;
-  //       }
-  //       var q = ((90 - φ) / 180 * height | 0) * width + ((180 + λ) / 360 * width | 0) << 2;
-  //       data[++i] = mercatorData[q];
-  //       data[++i] = mercatorData[++q];
-  //       data[++i] = mercatorData[++q];
-  //       data[++i] = 255;
-  //     }
-  //   }
+          let mercatorPoint = Conversor.ToMercator(info.coordinate, width, height);
+          let cell = Conversor.ToIdxWidth(mercatorPoint, width) * 4;
+  
+          array[cell] = color[0];
+          array[cell + 1] = color[1];
+          array[cell + 2] = color[2];
+          array[cell + 3] = color[3];
 
-  //   return image;
-  // }
-
-  // private getShorelines(width: number, height: number): WorldInfo[][] {
-  //   const points: WorldInfo[][] = [];
-
-  //   for (var x = 0; x < width; x++) {
-  //     for (var y = 0; y < height; y++) {
-  //       let info = this.world.GetInformation(Conversor.FromMercator(new Point(x, y, 0), width, height), this.zoom);
-  //       if (info.Shoreline) {
-  //         if (points[x] === undefined) points[x] = [];
-  //         points[x][y] = info;
-  //       }
-  //     }
-  //   }
-
-  //   const all = WorldInfo.AllInOne(points);
-
-  //   const polygonPoints: WorldInfo[][] = [];
-
-  //   // while (points.length > 0) {
-  //   const polygon: WorldInfo[] = [];
-  //   let current: WorldInfo = null;
-
-  //   const first: WorldInfo = all[0];
-
-  //   console.log('first', first);
-  //   WorldInfo.RemoveOne(points, first, width, height);
-  //   polygon.push(first);
-
-  //   while (first !== current) {
-  //     const actualPoint = Conversor.ToMercator((current ?? first).coordinate, width, height);
-  //     const allnear = WorldInfo.GetAllNear(all, actualPoint, width, height);
-  //     console.log('all near', allnear);
-
-  //     // const nearNewPoints = allnear.filter((n: WorldInfo) => polygon.includes((p: WorldInfo) => (p.coordinate.longitude === n.coordinate.longitude && p.coordinate.latitude === n.coordinate.latitude)));
-
-  //     const nearNewPoints = [];
-  //     allnear.forEach((n) => {
-  //       let exists = false;
-  //       polygon.forEach((p) => {
-  //         if (p.coordinate.longitude === n.coordinate.longitude && p.coordinate.latitude === n.coordinate.latitude) {
-  //           exists = true;
-  //           return;
-  //         }
-  //       });
-  //       if (!exists) {
-  //         nearNewPoints.push(n);
-  //       }
-  //     });
-
-
-  //     const nearNewPoint = nearNewPoints.sort((a: WorldInfo, b: WorldInfo) => {
-  //       return (Helper.Pitagoras(Conversor.ToMercator(a.coordinate, width, height), actualPoint) <= Helper.Pitagoras(Conversor.ToMercator(b.coordinate, width, height), actualPoint)) ? 1 : -1;
-  //     })[0];
-
-  //     console.log('near', nearNewPoints, nearNewPoint);
-  //     WorldInfo.RemoveOne(points, nearNewPoint, width, height);
-  //     polygon.push(nearNewPoint);
-  //     current = nearNewPoint;
-
-  //   }
-  //   console.log('polygon', polygon);
-  //   polygonPoints.push(polygon);
-  //   // }
-
-  //   return polygonPoints;
-  // }
+          all++;
+        });
+        console.log(`info svg all:${all} ${width}x${height}`);
+        resolve({ image: array });
+      });
+    });
+  }
 }

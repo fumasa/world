@@ -5,10 +5,11 @@ export class Progress {
   private total: number;
   public step: number = 0;
   private ini: Date;
-  constructor(total: number) {
+  constructor(total: number, autoStart = false, stepDiv = 10) {
     this.total = total;
-    this.step = this.total / 10;
+    this.step = this.total / stepDiv;
     this.progress = 0;
+    if (autoStart) this.start();
   }
 
   start() {
