@@ -184,40 +184,16 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
             _this.context.putImageData(image, 0, 0);
 
-            _this.world.getVectors(width, height).then(function (layers) {
-              layers.forEach(function (layer) {
-                var element = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                var path = "M ".concat(layer.limit[0].start.X, " ").concat(layer.limit[0].start.Y, " ");
-                layer.limit.forEach(function (vector) {
-                  path += "L ".concat(vector.end.X, " ").concat(vector.end.Y, " ");
-                });
-                path += 'Z';
-                element.setAttribute('d', path);
-                element.style.stroke = '#000';
-                element.style.fillOpacity = '.5';
-                element.style.strokeWidth = '1px';
+            _this.world.getVectors(width, height).then(function (layer) {
+              var element = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+              element.setAttribute('d', layer.AsSvgPath());
+              element.style.stroke = '#000';
+              element.style.fillOpacity = '.5';
+              element.style.strokeWidth = '1px';
 
-                _this.svg.nativeElement.appendChild(element);
-              }); // const svg = d3.select(this.svg.nativeElement);
-              // svg.attr('width', width).attr('height', height);
-              // svg.selectAll("polygon").data(layers).enter().append("polygon").attr("points", (d) => {
-              //   return d.map(function (d) {
-              //     return [d.start.X, d.start.Y].join(",");
-              //   }).join(" ");
-              // });
+              _this.svg.nativeElement.appendChild(element);
             });
-          }); // const svg = d3.select(this.svg.nativeElement);
-          // const x = (long: number) => (long + 180)/(360 / width);
-          // const y = (lat: number) => (lat + 90)/(180 / height);
-          // svg.attr('width', width).attr('height', height);
-          // const points: WorldInfo[][] = this.world.GetShorlines();
-          // console.log(`points len ${points.length}`);
-          // svg.selectAll("polygon").data(points).enter().append("polygon").attr("points", (d) => {
-          //   return d.map(function (d) {
-          //     const point = Conversor.ToMercator(d.coordinate, width, height);
-          //     return [point.X, point.Y].join(",");
-          //   }).join(" ");
-          // });
+          });
         } // private drawGlobe() {
         //   this.context = (<HTMLCanvasElement>this.canvas.nativeElement).getContext('2d');
         //   const projection = d3.geoOrthographic();
@@ -803,13 +779,12 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
               _loop();
             }
 
-            console.log('layers', layers.length, new Date()); // const shrunkenLayers: Layer[] = [];
-            // layers.forEach((layer) => {
-            //   shrunkenLayers.push(layer.shrunk());
-            // });
-            // console.log('shrunkenLayeredPaths', shrunkenLayers.length, new Date());
-
-            resolve(layers);
+            console.log('layers', layers.length, new Date());
+            var layer = new src_model_layer__WEBPACK_IMPORTED_MODULE_8__["Layer"]();
+            layer.innerLayers = layers;
+            layer.Process();
+            console.log('layer', layer, new Date());
+            resolve(layer);
           });
         }
       }, {
@@ -1127,6 +1102,71 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
           array.push(runner.copy);
           return new Layer(array, this.innerLayers);
         }
+      }, {
+        key: "inside",
+        value: function inside(point) {
+          var inside = false;
+
+          for (var i = 0, j = this.limit.length - 1; i < this.limit.length; j = i++) {
+            var xi = this.limit[i].start.X,
+                yi = this.limit[i].start.Y;
+            var xj = this.limit[j].start.X,
+                yj = this.limit[j].start.Y;
+            var intersect = yi > point.Y != yj > point.Y && point.X < (xj - xi) * (point.Y - yi) / (yj - yi) + xi;
+            if (intersect) inside = !inside;
+          }
+
+          return inside;
+        }
+      }, {
+        key: "AsSvgPath",
+        value: function AsSvgPath() {
+          var path = '';
+
+          if (this.limit.length > 0) {
+            path = 'M ';
+            this.limit.forEach(function (vector, idx) {
+              path += "".concat(idx > 0 ? 'L ' : '').concat(vector.start.X, " ").concat(vector.start.Y, " ");
+            });
+            path += "Z ";
+          }
+
+          this.innerLayers.forEach(function (layer) {
+            path += layer.AsSvgPath();
+          });
+          return path;
+        }
+      }, {
+        key: "Process",
+        value: function Process() {
+          this.innerLayers.sort(Layer.DefaultSort);
+
+          var copyInnerLayers = _toConsumableArray(this.innerLayers);
+
+          for (var i = 0; i < copyInnerLayers.length; i++) {
+            for (var j = this.innerLayers.length - 1; j > 0; j--) {
+              if (i !== j) {
+                if (copyInnerLayers[i].inside(this.innerLayers[j].limit[0].start)) {
+                  var innerLayer = this.innerLayers.splice(j, 1)[0];
+                  copyInnerLayers[i].innerLayers.push(innerLayer);
+                }
+              }
+            }
+          }
+
+          for (var _i = 0; _i < copyInnerLayers.length; _i++) {
+            if (copyInnerLayers[_i].innerLayers.length > 0) {
+              copyInnerLayers[_i].Process();
+            }
+          }
+        }
+      }], [{
+        key: "DefaultSort",
+        value: function DefaultSort(l1, l2) {
+          if (l1.limit.length > l2.limit.length) return 1;
+          if (l1.limit.length < l2.limit.length) return -1;
+          return 0;
+        }
       }]);
 
       return Layer;
@@ -1168,22 +1208,6 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
         key: "equals",
         value: function equals(point) {
           return this.X === point.X && this.Y === point.Y && this.Z === point.Z;
-        }
-      }, {
-        key: "inside",
-        value: function inside(vectors) {
-          var inside = false;
-
-          for (var i = 0, j = vectors.length - 1; i < vectors.length; j = i++) {
-            var xi = vectors[i].start.X,
-                yi = vectors[i].start.Y;
-            var xj = vectors[j].end.X,
-                yj = vectors[j].end.Y;
-            var intersect = yi > this.Y != yj > this.Y && this.X < (xj - xi) * (this.Y - yi) / (yj - yi) + xi;
-            if (intersect) inside = !inside;
-          }
-
-          return inside;
         }
       }]);
 

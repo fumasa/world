@@ -75,7 +75,7 @@ export class WorldGenerator {
     return new WorldInfo(topology, trees, ores, coordinate, point);
   }
 
-  public GetAllMercatorPoints(width: number, height: number, inspector: (a: WorldInfo)=> void = null): Promise<WorldInfo[]> {
+  public GetAllMercatorPoints(width: number, height: number, inspector: (a: WorldInfo) => void = null): Promise<WorldInfo[]> {
     return new Promise<WorldInfo[]>((resolve) => {
       const ini = new Date();
       let count = 0;
@@ -117,8 +117,8 @@ export class WorldGenerator {
     });
   }
 
-  public getVectors(width: number, height: number): Promise<Layer[]> {
-    return new Promise<Layer[]>(resolve => {
+  public getVectors(width: number, height: number): Promise<Layer> {
+    return new Promise<Layer>(resolve => {
       console.log(`[getVectors] start ${width}x${height}`, new Date());
       const allVectors: Vector[] = [];
       let count = 0;
@@ -157,12 +157,11 @@ export class WorldGenerator {
         layers.push(new Layer(vectors).shrunk());
       }
       console.log('layers', layers.length, new Date());
-      // const shrunkenLayers: Layer[] = [];
-      // layers.forEach((layer) => {
-      //   shrunkenLayers.push(layer.shrunk());
-      // });
-      // console.log('shrunkenLayeredPaths', shrunkenLayers.length, new Date());
-      resolve(layers);
+      const layer = new Layer();
+      layer.innerLayers = layers;
+      layer.Process();
+      console.log('layer', layer, new Date());
+      resolve(layer);
     });
   }
 

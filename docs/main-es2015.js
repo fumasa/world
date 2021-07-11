@@ -113,41 +113,15 @@ class MapToolComponent {
                 image.data[i] = data.image[i];
             }
             this.context.putImageData(image, 0, 0);
-            this.world.getVectors(width, height).then((layers) => {
-                layers.forEach(layer => {
-                    const element = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                    let path = `M ${layer.limit[0].start.X} ${layer.limit[0].start.Y} `;
-                    layer.limit.forEach(vector => {
-                        path += `L ${vector.end.X} ${vector.end.Y} `;
-                    });
-                    path += 'Z';
-                    element.setAttribute('d', path);
-                    element.style.stroke = '#000';
-                    element.style.fillOpacity = '.5';
-                    element.style.strokeWidth = '1px';
-                    this.svg.nativeElement.appendChild(element);
-                });
-                // const svg = d3.select(this.svg.nativeElement);
-                // svg.attr('width', width).attr('height', height);
-                // svg.selectAll("polygon").data(layers).enter().append("polygon").attr("points", (d) => {
-                //   return d.map(function (d) {
-                //     return [d.start.X, d.start.Y].join(",");
-                //   }).join(" ");
-                // });
+            this.world.getVectors(width, height).then((layer) => {
+                const element = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                element.setAttribute('d', layer.AsSvgPath());
+                element.style.stroke = '#000';
+                element.style.fillOpacity = '.5';
+                element.style.strokeWidth = '1px';
+                this.svg.nativeElement.appendChild(element);
             });
         });
-        // const svg = d3.select(this.svg.nativeElement);
-        // const x = (long: number) => (long + 180)/(360 / width);
-        // const y = (lat: number) => (lat + 90)/(180 / height);
-        // svg.attr('width', width).attr('height', height);
-        // const points: WorldInfo[][] = this.world.GetShorlines();
-        // console.log(`points len ${points.length}`);
-        // svg.selectAll("polygon").data(points).enter().append("polygon").attr("points", (d) => {
-        //   return d.map(function (d) {
-        //     const point = Conversor.ToMercator(d.coordinate, width, height);
-        //     return [point.X, point.Y].join(",");
-        //   }).join(" ");
-        // });
     }
     // private drawGlobe() {
     //   this.context = (<HTMLCanvasElement>this.canvas.nativeElement).getContext('2d');
@@ -550,12 +524,11 @@ class WorldGenerator {
                 layers.push(new src_model_layer__WEBPACK_IMPORTED_MODULE_8__["Layer"](vectors).shrunk());
             }
             console.log('layers', layers.length, new Date());
-            // const shrunkenLayers: Layer[] = [];
-            // layers.forEach((layer) => {
-            //   shrunkenLayers.push(layer.shrunk());
-            // });
-            // console.log('shrunkenLayeredPaths', shrunkenLayers.length, new Date());
-            resolve(layers);
+            const layer = new src_model_layer__WEBPACK_IMPORTED_MODULE_8__["Layer"]();
+            layer.innerLayers = layers;
+            layer.Process();
+            console.log('layer', layer, new Date());
+            resolve(layer);
         });
     }
     getSvg(width, height) {
@@ -765,6 +738,57 @@ class Layer {
         array.push(runner.copy);
         return new Layer(array, this.innerLayers);
     }
+    inside(point) {
+        let inside = false;
+        for (let i = 0, j = this.limit.length - 1; i < this.limit.length; j = i++) {
+            const xi = this.limit[i].start.X, yi = this.limit[i].start.Y;
+            const xj = this.limit[j].start.X, yj = this.limit[j].start.Y;
+            const intersect = ((yi > point.Y) != (yj > point.Y)) && (point.X < (xj - xi) * (point.Y - yi) / (yj - yi) + xi);
+            if (intersect)
+                inside = !inside;
+        }
+        return inside;
+    }
+    static DefaultSort(l1, l2) {
+        if (l1.limit.length > l2.limit.length)
+            return 1;
+        if (l1.limit.length < l2.limit.length)
+            return -1;
+        return 0;
+    }
+    AsSvgPath() {
+        let path = '';
+        if (this.limit.length > 0) {
+            path = 'M ';
+            this.limit.forEach((vector, idx) => {
+                path += `${idx > 0 ? 'L ' : ''}${vector.start.X} ${vector.start.Y} `;
+            });
+            path += `Z `;
+        }
+        this.innerLayers.forEach(layer => {
+            path += layer.AsSvgPath();
+        });
+        return path;
+    }
+    Process() {
+        this.innerLayers.sort(Layer.DefaultSort);
+        const copyInnerLayers = [...this.innerLayers];
+        for (let i = 0; i < copyInnerLayers.length; i++) {
+            for (let j = this.innerLayers.length - 1; j > 0; j--) {
+                if (i !== j) {
+                    if (copyInnerLayers[i].inside(this.innerLayers[j].limit[0].start)) {
+                        const innerLayer = this.innerLayers.splice(j, 1)[0];
+                        copyInnerLayers[i].innerLayers.push(innerLayer);
+                    }
+                }
+            }
+        }
+        for (let i = 0; i < copyInnerLayers.length; i++) {
+            if (copyInnerLayers[i].innerLayers.length > 0) {
+                copyInnerLayers[i].Process();
+            }
+        }
+    }
 }
 
 
@@ -788,17 +812,6 @@ class Point {
     }
     equals(point) {
         return (this.X === point.X && this.Y === point.Y && this.Z === point.Z);
-    }
-    inside(vectors) {
-        let inside = false;
-        for (let i = 0, j = vectors.length - 1; i < vectors.length; j = i++) {
-            const xi = vectors[i].start.X, yi = vectors[i].start.Y;
-            const xj = vectors[j].end.X, yj = vectors[j].end.Y;
-            const intersect = ((yi > this.Y) != (yj > this.Y)) && (this.X < (xj - xi) * (this.Y - yi) / (yj - yi) + xi);
-            if (intersect)
-                inside = !inside;
-        }
-        return inside;
     }
 }
 

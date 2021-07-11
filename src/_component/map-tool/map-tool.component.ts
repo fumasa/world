@@ -105,47 +105,16 @@ export class MapToolComponent implements AfterViewInit {
       }
       this.context.putImageData(image, 0, 0);
 
-      this.world.getVectors(width, height).then((layers) => {
-        layers.forEach(layer => {
-          const element = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-          let path = `M ${layer.limit[0].start.X} ${layer.limit[0].start.Y} `;
-          layer.limit.forEach(vector => {
-            path += `L ${vector.end.X} ${vector.end.Y} `;
-          });
-          path += 'Z';
-          element.setAttribute('d', path);
-          element.style.stroke = '#000';
-          element.style.fillOpacity = '.5';
-          element.style.strokeWidth = '1px';
+      this.world.getVectors(width, height).then((layer) => {
+        const element = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        element.setAttribute('d', layer.AsSvgPath());
+        element.style.stroke = '#000';
+        element.style.fillOpacity = '.5';
+        element.style.strokeWidth = '1px';
 
-          this.svg.nativeElement.appendChild(element);
-        });
-
-        // const svg = d3.select(this.svg.nativeElement);
-        // svg.attr('width', width).attr('height', height);
-        // svg.selectAll("polygon").data(layers).enter().append("polygon").attr("points", (d) => {
-        //   return d.map(function (d) {
-        //     return [d.start.X, d.start.Y].join(",");
-        //   }).join(" ");
-        // });
+        this.svg.nativeElement.appendChild(element);
       });
     });
-
-    // const svg = d3.select(this.svg.nativeElement);
-    // const x = (long: number) => (long + 180)/(360 / width);
-    // const y = (lat: number) => (lat + 90)/(180 / height);
-
-    // svg.attr('width', width).attr('height', height);
-
-    // const points: WorldInfo[][] = this.world.GetShorlines();
-    // console.log(`points len ${points.length}`);
-
-    // svg.selectAll("polygon").data(points).enter().append("polygon").attr("points", (d) => {
-    //   return d.map(function (d) {
-    //     const point = Conversor.ToMercator(d.coordinate, width, height);
-    //     return [point.X, point.Y].join(",");
-    //   }).join(" ");
-    // });
 
   }
 
