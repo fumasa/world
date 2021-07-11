@@ -5,10 +5,6 @@ import * as d3 from 'd3';
 import { WorldInfo } from 'src/_model/world.info';
 import { Conversor } from 'src/_utils/conversor';
 
-interface Datum {
-  id: string;
-}
-
 @Component({
   selector: 'map-tool',
   templateUrl: './map-tool.component.html',
@@ -24,11 +20,10 @@ export class MapToolComponent implements AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    this.drawSvgMercator();
+    this.drawMercator();
   }
 
-  private drawSvgMercator() {
-
+  private drawMercator() {
     this.context = (<HTMLCanvasElement>this.canvas.nativeElement).getContext('2d');
     const svg = d3.select(this.svg.nativeElement);
 
@@ -41,12 +36,21 @@ export class MapToolComponent implements AfterViewInit {
     svg.attr('width', width).attr('height', height);
 
     const image = this.context.createImageData(width, height);
+    const data = image.data;
 
-    this.renderMercator(width, height).then(data => {
-      this.context.clearRect(0, 0, width, height);
-      for (let i = 0; i < data.image.byteLength; i++) {
-        image.data[i] = data.image[i];
-      }
+    this.world.GetAllMercatorPoints(width, height).then((points) => {
+      console.log(`mercator: ${points.length} ${width}x${height}`);
+      points.forEach((info) => {
+        let color = BiomeColor.Get(info.Biome);
+
+        let mercatorPoint = Conversor.ToMercator(info.coordinate, width, height);
+        let cell = Conversor.ToIdxWidth(mercatorPoint, width) * 4;
+
+        data[cell] = color[0];
+        data[cell + 1] = color[1];
+        data[cell + 2] = color[2];
+        data[cell + 3] = color[3];
+      });
       this.context.putImageData(image, 0, 0);
 
       this.world.getVectors(width, height,
@@ -61,30 +65,6 @@ export class MapToolComponent implements AfterViewInit {
 
           this.svg.nativeElement.appendChild(element);
         });
-    });
-  }
-
-  private renderMercator(width: number, height: number) {
-    return new Promise<{ image: Uint8ClampedArray }>((resolve) => {
-      this.world.GetAllMercatorPoints(width, height).then((points) => {
-        let all = 0;
-        const array: Uint8ClampedArray = new Uint8ClampedArray(width * height * 4);
-        points.forEach((info) => {
-          let color = BiomeColor.Get(info.Biome);
-
-          let mercatorPoint = Conversor.ToMercator(info.coordinate, width, height);
-          let cell = Conversor.ToIdxWidth(mercatorPoint, width) * 4;
-  
-          array[cell] = color[0];
-          array[cell + 1] = color[1];
-          array[cell + 2] = color[2];
-          array[cell + 3] = color[3];
-
-          all++;
-        });
-        console.log(`info svg all:${all} ${width}x${height}`);
-        resolve({ image: array });
-      });
     });
   }
 }
