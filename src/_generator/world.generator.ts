@@ -10,7 +10,7 @@ import { Progress } from 'src/_utils/progress';
 
 export class WorldGenerator {
   private noise = { raw: [], topology: [], trees: [], ores: [] };
-  constructor(public seed = 8, useDefault = true, public radius = 5000) {
+  constructor(public seed = 8, useDefault = true, public tiltInDegree = 23.43, public oceanLevel = 0.5, public rotationSpeedInHours = 24, public numLatitudes = 12, public radius = 5000) {
     this.prepareSeed(seed);
     this.noise.raw = useDefault ? Perlin.DefaultP : Perlin.RandomP;
     this.noise.topology = this.generateNoise(this.noise.raw, seed);
@@ -93,26 +93,22 @@ export class WorldGenerator {
     });
   }
 
-  public GetAllPoints(step = 0.0001): Promise<WorldInfo[]> {
+  public GetAllPoints(step = 0.01): Promise<WorldInfo[]> {
     return new Promise<WorldInfo[]>((resolve) => {
-      const ini = new Date();
-      let count = 0;
+      const progress = new Progress('GetAllPoints', step, true);
       const decPl = Helper.DecimalPlaces(step);
-      console.log('decimal', decPl, step);
       const ret: WorldInfo[] = [];
       for (let longitude = -90; longitude <= 90; longitude += step) {
         for (let latitude = -180; latitude <= 180; latitude += step) {
           ret.push(this.GetInformation(new Coordinate(Helper.TruncDecimals(longitude, decPl), Helper.TruncDecimals(latitude, decPl)), 1, true));
-          count++;
         }
       }
-      const end = new Date();
-      console.log(`duration ${Helper.TruncDecimals(end.getTime() / 1000 - ini.getTime() / 1000, 3)}s with count: ${count}`);
+      progress.stop();
       resolve(ret);
     });
   }
 
-  public getLayer(width: number, height: number, checkPoint: (point: WorldInfo) => boolean = (p) => false): Promise<Layer> {
+  public getLayer(width: number, height: number, checkPoint: (point: WorldInfo) => boolean = (info) => info.topology < this.oceanLevel): Promise<Layer> {
     const progress = new Progress('getLayer', width * height);
     return new Promise<Layer>(resolve => {
       progress.start();
@@ -140,12 +136,12 @@ export class WorldGenerator {
     });
   }
 
-  public getLongitudeLines(width: number, height: number, rotationSpeedInHours: number = 24): Promise<Layer> {
+  public getLongitudeLines(width: number, height: number): Promise<Layer> {
     const progress = new Progress('getLongitudeLines', width * height);
     return new Promise<Layer>(resolve => {
       progress.start();
       const allLayers: Layer[] = [];
-      for (var x = 0; x <= width; x += width / rotationSpeedInHours) {
+      for (var x = 0; x <= width; x += width / this.rotationSpeedInHours) {
         const layer: Vector[] = [];
         let lastPoint: Point = new Point(x, 0, 0);
         for (var y = 1; y <= height; y++) {
@@ -155,7 +151,6 @@ export class WorldGenerator {
         }
         allLayers.push(new Layer([...layer]));
       }
-      console.log(`[getLongitudeLines] ${allLayers.length}`);
       const layer = new Layer([], [...allLayers]);
       progress.stop();
       resolve(layer);
@@ -179,12 +174,12 @@ export class WorldGenerator {
     });
   }
 
-  public getLatitudeLines(width: number, height: number, showEquator: boolean = true, numLatitudes = 12): Promise<Layer> {
+  public getLatitudeLines(width: number, height: number, showEquator: boolean = true): Promise<Layer> {
     const progress = new Progress('getLatitudeLines', width * height);
     return new Promise<Layer>(resolve => {
       progress.start();
       const allLayers: Layer[] = [];
-      for (var y = 0; y <= height; y += height / numLatitudes) {
+      for (var y = 0; y <= height; y += height / this.numLatitudes) {
         const layer: Vector[] = [];
         let lastPoint: Point = new Point(0, y, 0);
         for (var x = 1; x <= width; x++) {
@@ -194,20 +189,19 @@ export class WorldGenerator {
         }
         allLayers.push(new Layer([...layer]));
       }
-      console.log(`[getLatitudeLines] ${allLayers.length}`);
       const layer = new Layer([], [...allLayers]);
       progress.stop();
       resolve(layer);
     });
   }
 
-  public getTropicsAndCirclesLines(width: number, height: number, tiltInDegres: number = 23.43): Promise<Layer> {
+  public getTropicsAndCirclesLines(width: number, height: number): Promise<Layer> {
     const progress = new Progress('getTropicsAndCirclesLines', width * height);
     const radius = Math.round(width / (2 * Math.PI));
     return new Promise<Layer>(resolve => {
       progress.start();
       const allLayers: Layer[] = [];
-      const tropicsAndCircles = [tiltInDegres - 90, -1 * tiltInDegres, tiltInDegres, 90 - tiltInDegres];
+      const tropicsAndCircles = [this.tiltInDegree - 90, -1 * this.tiltInDegree, this.tiltInDegree, 90 - this.tiltInDegree];
       for (var y = 0; y < tropicsAndCircles.length; y++) {
         const coordinate = new Coordinate(tropicsAndCircles[y], x, radius);
         const actualY = Conversor.ToMercator(coordinate, width, height).Y;
@@ -220,7 +214,6 @@ export class WorldGenerator {
         }
         allLayers.push(new Layer([...layer]));
       }
-      console.log(`[getTropicsAndCirclesLines] ${allLayers.length}`);
       const layer = new Layer([], [...allLayers]);
       progress.stop();
       resolve(layer);

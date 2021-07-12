@@ -38,7 +38,7 @@ export class MapToolComponent implements AfterViewInit {
 
     this.world.GetAllMercatorPoints(width, height).then((points) => Helper.BuildImage(this.context, points, width, height));
 
-    this.world.getLayer(width, height, (info: WorldInfo) => info.topology < 0.5).then((layer) => Helper.CreatePathElement(this.svg, layer.AsSvgPath()));
+    this.world.getLayer(width, height).then((layer) => Helper.CreatePathElement(this.svg, layer.AsSvgPath()));
 
     this.world.getLongitudeLines(width, height).then((layer) => Helper.CreatePathElement(this.svg, layer.AsSvgPath(false), { fillOpacity: '.1', stroke: '#000', strokeWidth: '.5px' }));
     this.world.getLatitudeLines(width, height, false).then((layer) => Helper.CreatePathElement(this.svg, layer.AsSvgPath(false), { fillOpacity: '.1', stroke: '#000', strokeWidth: '.5px' }));
