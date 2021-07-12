@@ -1,5 +1,8 @@
 import { ElementRef } from '@angular/core';
 import { Point } from 'src/_model/point';
+import { WorldInfo } from 'src/_model/world.info';
+import { BiomeColor } from './biome.color';
+import { Conversor } from './conversor';
 
 export class Helper {
   public static TruncDecimals(num: number, precision = 4): number {
@@ -33,8 +36,22 @@ export class Helper {
     element.style.stroke = style.stroke;
     element.style.fillOpacity = style.fillOpacity;
     element.style.strokeWidth = style.strokeWidth;
-
     svg.nativeElement.appendChild(element);
+  }
+
+  public static BuildImage(context: CanvasRenderingContext2D, points: WorldInfo[], width: number, height: number) {
+    const image = context.createImageData(width, height);
+    const data = image.data;
+    points.forEach((info) => {
+      const color = BiomeColor.Get(info.Biome);
+      const mercatorPoint = Conversor.ToMercator(info.coordinate, width, height);
+      const cell = Conversor.ToIdxWidth(mercatorPoint, width) * 4;
+      data[cell] = color[0];
+      data[cell + 1] = color[1];
+      data[cell + 2] = color[2];
+      data[cell + 3] = color[3];
+    });
+    context.putImageData(image, 0, 0);
   }
 
   public static Matrix(width = 200, height = 100, action: (x: number, y: number) => void = () => null, initx = 0, inity = 0, increment = 1) {

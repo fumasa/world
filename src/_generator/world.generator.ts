@@ -18,6 +18,9 @@ export class WorldGenerator {
     this.noise.ores = this.generateNoise(this.generateNewNoise(2), seed);
   }
 
+  private crostaVar: { min: number, max: number } = { min: this.radius / 1000, max: this.radius / 100 };
+  private topologyVar: { min: number, max: number } = { min: this.crostaVar.min / 20, max: this.crostaVar.max / 10 }
+
   private prepareSeed(seed) {
     if (seed > 0 && seed < 1) {
       seed *= 65536;
@@ -125,9 +128,7 @@ export class WorldGenerator {
           if (checkPoint(this.GetInformation(Conversor.FromMercator(so, width, height), 1))) continue;
           const se = new Point((1 + x), (1 + y), 0);
           if (checkPoint(this.GetInformation(Conversor.FromMercator(se, width, height), 1))) continue;
-
           const vectors = [new Vector(no, ne), new Vector(ne, se), new Vector(se, so), new Vector(so, no)];
-
           vectors.forEach((vector) => {
             Vector.AddInIfInvertNotExistsAndRemoveItFrom(allVectors, vector);
           });
@@ -144,21 +145,17 @@ export class WorldGenerator {
     return new Promise<Layer>(resolve => {
       progress.start();
       const allLayers: Layer[] = [];
-      for (var x = 0; x <= width; x++) {
+      for (var x = 0; x <= width; x += width / rotationSpeedInHours) {
         const layer: Vector[] = [];
         let lastPoint: Point = new Point(x, 0, 0);
         for (var y = 1; y <= height; y++) {
           const mercatorPoint = new Point(x, y, 0);
-          const coordinate = Conversor.FromMercator(mercatorPoint, width, height);
-
-          if (coordinate.longitude % rotationSpeedInHours === 0) {
-            layer.push(new Vector(lastPoint.copy(), mercatorPoint.copy()));
-            lastPoint = mercatorPoint.copy();
-          }
+          layer.push(new Vector(lastPoint.copy(), mercatorPoint.copy()));
+          lastPoint = mercatorPoint.copy();
         }
-
         allLayers.push(new Layer([...layer]));
       }
+      console.log(`[getLongitudeLines] ${allLayers.length}`);
       const layer = new Layer([], [...allLayers]);
       progress.stop();
       resolve(layer);
@@ -173,52 +170,44 @@ export class WorldGenerator {
       let lastPoint: Point = new Point(0, height / 2, 0);
       for (var x = 1; x <= width; x++) {
         const mercatorPoint = new Point(x, height / 2, 0);
-
         vectors.push(new Vector(lastPoint.copy(), mercatorPoint.copy()));
         lastPoint = mercatorPoint.copy();
       }
-
       const layer = new Layer([...vectors]);
       progress.stop();
       resolve(layer);
     });
   }
 
-  public getLatitudeLines(width: number, height: number, showEquator: boolean = true): Promise<Layer> {
+  public getLatitudeLines(width: number, height: number, showEquator: boolean = true, numLatitudes = 12): Promise<Layer> {
     const progress = new Progress('getLatitudeLines', width * height);
     return new Promise<Layer>(resolve => {
       progress.start();
       const allLayers: Layer[] = [];
-      for (var y = 0; y <= height; y++) {
+      for (var y = 0; y <= height; y += height / numLatitudes) {
         const layer: Vector[] = [];
         let lastPoint: Point = new Point(0, y, 0);
         for (var x = 1; x <= width; x++) {
           const mercatorPoint = new Point(x, y, 0);
-          const coordinate = Conversor.FromMercator(mercatorPoint, width, height);
-
-          if (coordinate.latitude % 12 === 0) {
-            if ((coordinate.latitude === 0 && showEquator) || coordinate.latitude !== 0) {
-              layer.push(new Vector(lastPoint.copy(), mercatorPoint.copy()));
-              lastPoint = mercatorPoint.copy();
-            }
-          }
+          layer.push(new Vector(lastPoint.copy(), mercatorPoint.copy()));
+          lastPoint = mercatorPoint.copy();
         }
-
         allLayers.push(new Layer([...layer]));
       }
+      console.log(`[getLatitudeLines] ${allLayers.length}`);
       const layer = new Layer([], [...allLayers]);
       progress.stop();
       resolve(layer);
     });
   }
 
-  public getTropicsAndCirclesLines(width: number, height: number, inclinationInDegres: number = 23.43): Promise<Layer> {
+  public getTropicsAndCirclesLines(width: number, height: number, tiltInDegres: number = 23.43): Promise<Layer> {
     const progress = new Progress('getTropicsAndCirclesLines', width * height);
     const radius = Math.round(width / (2 * Math.PI));
     return new Promise<Layer>(resolve => {
       progress.start();
       const allLayers: Layer[] = [];
-      const tropicsAndCircles = [inclinationInDegres - 90, -1 * inclinationInDegres, inclinationInDegres, 90 - inclinationInDegres];
+      const tropicsAndCircles = [tiltInDegres - 90, -1 * tiltInDegres, tiltInDegres, 90 - tiltInDegres];
       for (var y = 0; y < tropicsAndCircles.length; y++) {
         const coordinate = new Coordinate(tropicsAndCircles[y], x, radius);
         const actualY = Conversor.ToMercator(coordinate, width, height).Y;
@@ -226,13 +215,12 @@ export class WorldGenerator {
         let lastPoint: Point = new Point(0, actualY, 0);
         for (var x = 1; x < width; x++) {
           const mercatorPoint = new Point(x, actualY, 0);
-
           layer.push(new Vector(lastPoint.copy(), mercatorPoint.copy()));
           lastPoint = mercatorPoint.copy();
         }
-
         allLayers.push(new Layer([...layer]));
       }
+      console.log(`[getTropicsAndCirclesLines] ${allLayers.length}`);
       const layer = new Layer([], [...allLayers]);
       progress.stop();
       resolve(layer);

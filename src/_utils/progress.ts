@@ -4,6 +4,7 @@ export class Progress {
   private progress: number;
   public step: number = 0;
   private ini: Date;
+  private lastCheck: number;
   constructor(private context:string, private total: number, autoStart = false, stepDiv = 10) {
     this.total = total;
     this.step = this.total / stepDiv;
@@ -13,6 +14,7 @@ export class Progress {
 
   start() {
     this.ini = new Date();
+    this.lastCheck = 0;
     console.log(`[${this.context}] start ${this.total}`, this.ini);
   }
 
@@ -25,7 +27,11 @@ export class Progress {
     this.progress++;
     if (this.progress % this.step === 0) {
       const partial = new Date();
-      console.log(`[${this.context}] ${Math.round((this.progress * 100) / this.total)}%${ this.ini !== null ? ` partial-duration: ${Helper.TruncDecimals(partial.getTime() / 1000 - this.ini.getTime() / 1000, 3)}s` : '' }`);
+      if (this.ini !== null) {
+      const check = Helper.TruncDecimals(partial.getTime() / 1000 - this.ini.getTime() / 1000, 3);
+      console.log(`[${this.context}] ${Math.round((this.progress * 100) / this.total)}% partial-duration: ${Helper.TruncDecimals(check - this.lastCheck, 3)}s ${check}s`);
+      this.lastCheck = check;
+      }
     }
   }
 }

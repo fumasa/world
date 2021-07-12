@@ -36,30 +36,13 @@ export class MapToolComponent implements AfterViewInit {
 
     svg.attr('width', width).attr('height', height);
 
-    const image = this.context.createImageData(width, height);
-    const data = image.data;
+    this.world.GetAllMercatorPoints(width, height).then((points) => Helper.BuildImage(this.context, points, width, height));
 
-    this.world.GetAllMercatorPoints(width, height).then((points) => {
-      console.log(`mercator: ${points.length} ${width}x${height}`);
-      points.forEach((info) => {
-        let color = BiomeColor.Get(info.Biome);
+    this.world.getLayer(width, height, (info: WorldInfo) => info.topology < 0.5).then((layer) => Helper.CreatePathElement(this.svg, layer.AsSvgPath()));
 
-        let mercatorPoint = Conversor.ToMercator(info.coordinate, width, height);
-        let cell = Conversor.ToIdxWidth(mercatorPoint, width) * 4;
-
-        data[cell] = color[0];
-        data[cell + 1] = color[1];
-        data[cell + 2] = color[2];
-        data[cell + 3] = color[3];
-      });
-      this.context.putImageData(image, 0, 0);
-
-      this.world.getLayer(width, height, (info: WorldInfo) => info.topology < 0.5).then((layer) => Helper.CreatePathElement(this.svg, layer.AsSvgPath()));
-
-      this.world.getLongitudeLines(width, height).then((layer) => Helper.CreatePathElement(this.svg, layer.AsSvgPath(false), { fillOpacity: '.1', stroke: '#000', strokeWidth: '.5px' }));
-      this.world.getLatitudeLines(width, height, false).then((layer) => Helper.CreatePathElement(this.svg, layer.AsSvgPath(false), { fillOpacity: '.1', stroke: '#000', strokeWidth: '.5px' }));
-      this.world.getEquatorLines(width, height).then((layer) => Helper.CreatePathElement(this.svg, layer.AsSvgPath(false), { fillOpacity: '.1', stroke: '#F00', strokeWidth: '1px' }));
-      this.world.getTropicsAndCirclesLines(width, height).then((layer) => Helper.CreatePathElement(this.svg, layer.AsSvgPath(false), { fillOpacity: '.1', stroke: '#00F', strokeWidth: '1px' }));
-    });
+    this.world.getLongitudeLines(width, height).then((layer) => Helper.CreatePathElement(this.svg, layer.AsSvgPath(false), { fillOpacity: '.1', stroke: '#000', strokeWidth: '.5px' }));
+    this.world.getLatitudeLines(width, height, false).then((layer) => Helper.CreatePathElement(this.svg, layer.AsSvgPath(false), { fillOpacity: '.1', stroke: '#000', strokeWidth: '.5px' }));
+    this.world.getEquatorLines(width, height).then((layer) => Helper.CreatePathElement(this.svg, layer.AsSvgPath(false), { fillOpacity: '.1', stroke: '#F00', strokeWidth: '1px' }));
+    this.world.getTropicsAndCirclesLines(width, height).then((layer) => Helper.CreatePathElement(this.svg, layer.AsSvgPath(false), { fillOpacity: '.1', stroke: '#00F', strokeWidth: '1px' }));
   }
 }
