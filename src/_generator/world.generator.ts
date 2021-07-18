@@ -184,8 +184,8 @@ export class WorldGenerator {
     });
   }
 
-  public getSunShadown(width: number, height: number): Promise<Layer> {
-    const progress = new Progress('getSunShadown', width * height);
+  public getSunShadow(width: number, height: number): Promise<Layer> {
+    const progress = new Progress('getSunShadow', width * height);
     return new Promise<Layer>(resolve => {
       progress.start();
       const allVectors: Vector[] = [];
