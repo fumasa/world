@@ -44,5 +44,7 @@ export class MapToolComponent implements AfterViewInit {
     this.world.getLatitudeLines(width, height, false).then((layer) => Helper.CreatePathElement(this.svg, layer.AsSvgPath(false), { fillOpacity: '.1', stroke: '#000', strokeWidth: '.5px' }));
     this.world.getEquatorLines(width, height).then((layer) => Helper.CreatePathElement(this.svg, layer.AsSvgPath(false), { fillOpacity: '.1', stroke: '#F00', strokeWidth: '1px' }));
     this.world.getTropicsAndCirclesLines(width, height).then((layer) => Helper.CreatePathElement(this.svg, layer.AsSvgPath(false), { fillOpacity: '.1', stroke: '#00F', strokeWidth: '1px' }));
+
+    this.world.getSunShadown(width, height).then((layer) => Helper.CreatePathElement(this.svg, layer.AsSvgPath(), { fillOpacity: '.8', stroke: '#000', strokeWidth: '0px' }));
   }
 }

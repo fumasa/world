@@ -1,8 +1,11 @@
 import { ElementRef } from '@angular/core';
+import { Coordinate } from 'src/_model/coordinate';
 import { Point } from 'src/_model/point';
 import { WorldInfo } from 'src/_model/world.info';
 import { BiomeColor } from './biome.color';
 import { Conversor } from './conversor';
+import * as moment from 'moment';
+import SkyPoint from 'src/_model/sky-point';
 
 export class Helper {
   public static TruncDecimals(num: number, precision = 4): number {
@@ -30,7 +33,7 @@ export class Helper {
     return new Point((idx % width), (idx / width), 0);
   }
 
-  public static CreatePathElement(svg: ElementRef<any>,path: string, style: { fillOpacity?: string, stroke?: string, strokeWidth?: string } = { fillOpacity: '.5', stroke: '#000', strokeWidth: '1px' }) {
+  public static CreatePathElement(svg: ElementRef<any>, path: string, style: { fillOpacity?: string, stroke?: string, strokeWidth?: string } = { fillOpacity: '.5', stroke: '#000', strokeWidth: '1px' }) {
     const element = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     element.setAttribute('d', path);
     element.style.stroke = style.stroke;

@@ -7,10 +7,11 @@ import { Helper } from 'src/_utils/helper';
 import { Vector } from 'src/_model/vector';
 import { Layer } from 'src/_model/layer';
 import { Progress } from 'src/_utils/progress';
+import SkyPoint from 'src/_model/sky-point';
 
 export class WorldGenerator {
   private noise = { raw: [], topology: [], trees: [], ores: [] };
-  constructor(public seed = 8, useDefault = true, public tiltInDegree = 23.43, public oceanLevel = 0.5, public rotationSpeedInHours = 24, public numLatitudes = 12, public radius = 5000) {
+  constructor(public seed = 8, useDefault = true, public tiltInDegree = 23.43, public oceanLevel = 0.5, public rotationSpeedInHours = 24, public numLatitudes = 12, public radius = 5000, public startDate = new Date()) {
     this.prepareSeed(seed);
     this.noise.raw = useDefault ? Perlin.DefaultP : Perlin.RandomP;
     this.noise.topology = this.generateNoise(this.noise.raw, seed);
@@ -78,6 +79,53 @@ export class WorldGenerator {
     return new WorldInfo(topology, trees, ores, coordinate, point);
   }
 
+  public GetSunPosition(coordinate: Coordinate, date: Date): SkyPoint {
+    const handle = (num: number, convert2rad = false, value = 360): number => {
+      num %= value;
+      num += num < 0 ? value : 0;
+      if (convert2rad) {
+        num *= deg2rad;
+      }
+      return num;
+    }
+
+    const twopi = 2 * Math.PI;
+    const deg2rad = Math.PI / 180;
+    const jd = (date.getTime() / 86400000) - (date.getTimezoneOffset() / 1440) + 2440587.5;
+    const time = jd - 51545;
+    const mnlong = handle(280.460 + .9856474 * time);
+    const mnanon = handle(357.528 + .9856003 * time, true);
+    const eclong = handle(mnlong + 1.915 * Math.sin(mnanon) + 0.020 * Math.sin(2 * mnanon), true);
+    const oblqec = (23.439 - 0.00000004 * time) * deg2rad;
+    const num = Math.cos(oblqec) * Math.sin(eclong);
+    const den = Math.cos(eclong);
+    const dec = Math.asin(Math.sin(oblqec) * Math.sin(eclong));
+    const gmst = handle(6.697375 + .0657098242 * time + date.getHours(), false, 24);
+    const lat = coordinate.latitude * deg2rad;
+
+    let ra = Math.atan(num / den);
+    ra += den < 0 ? Math.PI : 0;
+    ra += den >= 0 && num < 0 ? twopi : 0;
+
+    let lmst = handle(gmst + coordinate.longitude / 15, false, 24);
+    lmst *= 15 * deg2rad;
+
+    let ha = lmst - ra;
+    ha += (ha < - Math.PI) ? twopi : 0;
+    ha -= (ha > Math.PI) ? twopi : 0;
+
+    let el = Math.asin(Math.sin(dec) * Math.sin(lat) + Math.cos(dec) * Math.cos(lat) * Math.cos(ha));
+    let az = Math.asin(-1 * Math.cos(dec) * Math.sin(ha) / Math.cos(el));
+
+    if (0 <= Math.sin(dec) - Math.sin(el) * Math.sin(lat)) {
+      if (Math.sin(az) < 0) az += twopi;
+    } else {
+      az = Math.PI - az;
+    }
+
+    return new SkyPoint(az / deg2rad, el / deg2rad);
+  }
+
   public GetAllMercatorPoints(width: number, height: number): Promise<WorldInfo[]> {
     return new Promise<WorldInfo[]>((resolve) => {
       const progress = new Progress('GetAllMercatorPoints', width * height, true);
@@ -124,6 +172,34 @@ export class WorldGenerator {
           if (checkPoint(this.GetInformation(Conversor.FromMercator(so, width, height), 1))) continue;
           const se = new Point((1 + x), (1 + y), 0);
           if (checkPoint(this.GetInformation(Conversor.FromMercator(se, width, height), 1))) continue;
+          const vectors = [new Vector(no, ne), new Vector(ne, se), new Vector(se, so), new Vector(so, no)];
+          vectors.forEach((vector) => {
+            Vector.AddInIfInvertNotExistsAndRemoveItFrom(allVectors, vector);
+          });
+        }
+      }
+      const layer = Layer.Transform(allVectors);
+      progress.stop();
+      resolve(layer);
+    });
+  }
+
+  public getSunShadown(width: number, height: number): Promise<Layer> {
+    const progress = new Progress('getSunShadown', width * height);
+    return new Promise<Layer>(resolve => {
+      progress.start();
+      const allVectors: Vector[] = [];
+      for (var x = 0; x < width - 1; x++) {
+        for (var y = 0; y < height - 1; y++) {
+          progress.check();
+          const no = new Point(x, y, 0);
+          if (this.GetSunPosition(Conversor.FromMercator(no, width, height), this.startDate).elevation > 0) continue;
+          const ne = new Point((1 + x), y, 0);
+          if (this.GetSunPosition(Conversor.FromMercator(ne, width, height), this.startDate).elevation > 0) continue;
+          const so = new Point(x, (1 + y), 0);
+          if (this.GetSunPosition(Conversor.FromMercator(so, width, height), this.startDate).elevation > 0) continue;
+          const se = new Point((1 + x), (1 + y), 0);
+          if (this.GetSunPosition(Conversor.FromMercator(se, width, height), this.startDate).elevation > 0) continue;
           const vectors = [new Vector(no, ne), new Vector(ne, se), new Vector(se, so), new Vector(so, no)];
           vectors.forEach((vector) => {
             Vector.AddInIfInvertNotExistsAndRemoveItFrom(allVectors, vector);
